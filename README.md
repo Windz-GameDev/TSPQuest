@@ -9,6 +9,8 @@ between exact and approximate heuristic algorithms".
 
 ## Algorithms
 
+Note: This Repo is a work in progress; not all algorithms have been implemented yet.
+
 The scripts in this repository implement the following algorithms for solving the TSP:
 
 1. **Brute Force**: An exact algorithm that generates all possible tours and then selects the shortest one. Time Complexity: \(O(n!)\).
