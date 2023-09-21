@@ -24,7 +24,7 @@ The scripts in this repository implement the following algorithms for solving th
 
 ## Dataset
 
-The scripts use the following TSP datasets:
+The script uses the following TSP datasets, which were retrieved from [The University of Waterloo's TSP page](https://www.math.uwaterloo.ca/tsp/world/countries.html):
 
 - `lu98.tsp`: Represents the locations of 980 cities in Luxembourg.
 - `qa194.tsp`: Represents 194 locations in Qatar.
