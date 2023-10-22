@@ -10,11 +10,7 @@
     Dynamic Programming - https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/
     Greedy - https://www.geeksforgeeks.org/travelling-salesman-problem-greedy-approach/
     Datasets - http://www.math.uwaterloo.ca/tsp/world/countries.html
-
-
-
 '''
-
 
 # Import required libraries
 import argparse
@@ -22,7 +18,7 @@ import math
 import time 
 import matplotlib.pyplot as plt
 from itertools import permutations
-
+from func_timeout import func_timeout, FunctionTimedOut
 
 def plot_path(coords, path, algorithm, total_distance, time):
     
@@ -201,11 +197,22 @@ def held_karp_tsp(coords):
     
     return path, min_cost
 
+def run_algorithm(algorithm, coords):
+    if algorithm == 'brute_force':
+        return brute_force_tsp(coords)
+    elif algorithm == 'nearest_neighbor':
+         return nearest_neighbor_tsp(coords)
+    elif algorithm == 'branch_and_bound':
+         return branch_and_bound_tsp(coords)
+    elif algorithm == 'held_karp':
+        return held_karp_tsp(coords)
+
 def main():
     # Argument parsing
     parser = argparse.ArgumentParser(description='Solve TSP problem using different algorithms.')
     parser.add_argument('dataset', type=str, help='TSP dataset file path.')
     parser.add_argument('algorithm', type=str, choices=['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp'], help='Algorithm to use.')
+    parser.add_argument('--timeout', type=int, default=60, help='Timeout for the algorithm in seconds.')
     args = parser.parse_args()
     
     # Read dataset and execute algorithm
@@ -213,22 +220,19 @@ def main():
 
     start_time = time.time()
 
-    if args.algorithm == 'brute_force':
-        path, distance = brute_force_tsp(coords)
-    elif args.algorithm == 'nearest_neighbor':
-        path, distance = nearest_neighbor_tsp(coords)
-    elif args.algorithm == 'branch_and_bound':
-        path, distance = branch_and_bound_tsp(coords)
-    elif args.algorithm == 'held_karp':
-        path, distance = held_karp_tsp(coords)
+    try:
+        path, distance = func_timeout(args.timeout, run_algorithm, args=(args.algorithm, coords))
+    except FunctionTimedOut:
+        print(f"{args.algorithm.replace('_', ' ').title()} took too long to run. Skipping...")
+        return  # Exiting the function as the algorithm didn't complete within the timeout
 
     totalTime = time.time() - start_time
-    print(f"{args.algorithm.replace('_', ' ').title()}: Path = {path}, Distance = {distance}, N = {len(coords)}")
 
-    print(f"Elapsed time: {totalTime} seconds")
-
-    # Plot the path
-    plot_path(coords, path, args.algorithm, distance, totalTime)
+    if path is not None and distance is not None:
+        print(f"{args.algorithm.replace('_', ' ').title()}: Path = {path}, Distance = {distance}, N = {len(coords)}")
+        print(f"Elapsed time: {totalTime} seconds")
+        # Plot the path
+        plot_path(coords, path, args.algorithm, distance, totalTime)
 
 
 # Entry point of the script
