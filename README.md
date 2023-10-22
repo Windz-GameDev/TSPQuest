@@ -39,13 +39,17 @@ The script uses the following TSP datasets, which were retrieved from [The Unive
 
 To run the script, use the following command:
 
-python benchmark.py Datasets/`dataset` `algorithm`
+python benchmark.py Datasets/`dataset` `algorithm` `--timeout [# seconds]`
 
 Replace `dataset` with the name of the TSP dataset file (e.g., `lu98.tsp`), and `algorithm` with the algorithm you want to use (`brute_force`, `branch_and_bound`, `held_karp`, `nearest_neighbor`, `two_opt`, or `simulated_annealing`).
 
 For example, to solve the `lu98.tsp` dataset using the brute-force algorithm, run:
 
 python benchmark.py Datasets/lu98.tsp brute_force
+
+By specifying a timeout, you specify a maximum number of seconds any one algorithm may attempt to solve the TSP, the default is 60.
+
+python benchmark.py Datasets/lu98.tsp brute_force --timeout 60
 
 ## Dependencies
 
@@ -55,6 +59,7 @@ The scripts require Python and the following Python libraries:
 - `math`
 - `itertools`
 - `matplotlib`
+- `func_timeout`
 
 ## References
 
