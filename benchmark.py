@@ -1,15 +1,66 @@
+'''
+    Source Code for Algorithms Project for COT6405
+
+    Algorithms for Brute Force, Nearest Neighor, Branch and Bound, Dynamic programming are 
+    referenced from GeeksForGeeks to ensure accurate implementation. Datasets 
+
+    References: 
+    BruteForce - https://www.geeksforgeeks.org/traveling-salesman-problem-tsp-implementation/
+    Branch and Bound - https://www.geeksforgeeks.org/traveling-salesman-problem-using-branch-and-bound-2/
+    Dynamic Programming - https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/
+    Greedy - https://www.geeksforgeeks.org/travelling-salesman-problem-greedy-approach/
+    Datasets - http://www.math.uwaterloo.ca/tsp/world/countries.html
+
+
+
+'''
+
+
 # Import required libraries
 import argparse
 import math
+import time 
+import matplotlib.pyplot as plt
 from itertools import permutations
+
+
+def plot_path(coords, path, algorithm, total_distance, time):
+    
+    # Unpack the coordinates list of tuples into two seperate list, x, and y, zip groups first elements (x-coordinates together, and second elements (y-coordinates together)
+    x, y = zip(*coords)
+
+    # Create a scatter plot of the cities, takes two arguments, x coordinates, and y-coordinates and plots these points on a 2D graph.
+    plt.scatter(x,y)
+
+    # Plot the path taken
+    for i in range(len(path) - 1): # Stop at one less than the final city because final city will try to connect to a city out of bounds
+        plt.plot((coords[path[i]][0], coords[path[i+1]][0]), (coords[path[i]][1], coords[path[i+1]][1]), 'r-') # First argument is a tuple containing the x coordinates of the first and second city, the second tuple is for the y coordinates respectively
+    plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path
+
+    # Add title
+    plt.title(f"{algorithm.replace('_', ' ').title()} - Cities: {len(coords)} - Distance (Euclidean): {total_distance} - Time (Seconds): {time}")
+
+    # Add labels
+    plt.xlabel("X-Axis")
+    plt.ylabel("Y-Axis")
+
+    # Show the plot
+    plt.show()
 
 # Function to calculate Euclidean distance between two points
 def euclidean_distance(point1, point2):
     return math.sqrt((point2[0] - point1[0])**2 + (point2[1] - point1[1])**2)
 
 def read_tsp_file_from_disk(filename):
-    with open(filename, 'r') as f:
-        return read_tsp_file(f.read())
+    try:
+        with open(filename, 'r') as f:
+            return read_tsp_file(f.read())
+    except FileNotFoundError:
+        print(f"Error: The file '{filename}' does not exist.")
+        exit(1)
+    except IOError:
+        print(f"Error: The file '{filename}' could not be opened.")
+        exit(1)
 
 # Function to read TSP dataset from a string
 def read_tsp_file(file_content):
@@ -53,7 +104,7 @@ def brute_force_tsp(coords):
     return best_path, min_distance
 
 # Greedy algorithm for solving TSP
-def greedy_tsp(coords):
+def nearest_neighbor_tsp(coords):
     num_cities = len(coords)
     unvisited = set(range(num_cities))
     path = []
@@ -73,21 +124,111 @@ def greedy_tsp(coords):
     total_distance += euclidean_distance(coords[current_city], coords[path[0]])
     return path, total_distance
 
+# Branch and bound method for solving TSP
+def branch_and_bound_tsp(coords):
+    def calculate_lower_bound(path, remaining):
+        lb = sum(euclidean_distance(coords[path[i]], coords[path[i+1]]) for i in range(len(path)-1))
+        
+        # Adding the minimum distance to a city not yet visited
+        if remaining:
+            lb += min(euclidean_distance(coords[path[-1]], coords[k]) for k in remaining)
+            
+            for city in remaining: 
+                # Check if there are cities remaining to compare distance
+                remaining_cities = remaining-{city}
+                if remaining_cities:  # Check if there are still cities remaining
+                    lb += min(euclidean_distance(coords[city], coords[k]) for k in remaining_cities)
+        
+        return lb
+
+    best_tour = []
+    best_distance = float('inf')
+
+    def search(path, remaining):
+        nonlocal best_tour, best_distance
+        if not remaining:
+            total_distance = sum(euclidean_distance(coords[path[i]], coords[path[i+1]]) for i in range(len(path)-1))
+            total_distance += euclidean_distance(coords[path[-1]], coords[path[0]])
+            
+            if total_distance < best_distance:
+                best_distance = total_distance
+                best_tour = list(path)
+            
+            return
+
+        for next_city in remaining:
+            if calculate_lower_bound(path + [next_city], remaining - {next_city}) < best_distance:
+                search(path + [next_city], remaining - {next_city})
+
+    search([0], set(i for i in range(1, len(coords))))
+    return best_tour, best_distance
+
+def held_karp_tsp(coords):
+    n = len(coords)
+    distances = [[euclidean_distance(coords[i], coords[j]) for j in range(n)] for i in range(n)]
+    memo = {}
+
+    def hk_recursive(S, j):
+        if S == (1 << j):
+            return distances[0][j]
+        if (S, j) in memo:
+            return memo[(S, j)]
+
+        costs = [
+            hk_recursive(S & ~(1 << j), k) + distances[k][j]
+            for k in range(1, n) if S & (1 << k) and k != j
+        ]
+        
+        if costs:
+            memo[(S, j)] = min(costs)
+        else:
+            memo[(S, j)] = float('inf')  # No valid cost, set to infinity
+        
+        return memo[(S, j)]
+
+    min_cost = min(hk_recursive((1 << n) - 2, j) + distances[j][0] for j in range(1, n))
+    
+    # Reconstructing the path
+    S, j, path = (1 << n) - 2, 0, [0]
+    for _ in range(n-1):
+        j = min(
+            ((k, distances[j][k] + hk_recursive(S & ~(1 << k), k))
+             for k in range(1, n) if S & (1 << k)),
+            key=lambda x: x[1]
+        )[0]
+        S &= ~(1 << j)
+        path.append(j)
+    
+    return path, min_cost
+
 def main():
     # Argument parsing
     parser = argparse.ArgumentParser(description='Solve TSP problem using different algorithms.')
     parser.add_argument('dataset', type=str, help='TSP dataset file path.')
-    parser.add_argument('algorithm', type=str, choices=['brute_force', 'greedy'], help='Algorithm to use.')
+    parser.add_argument('algorithm', type=str, choices=['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp'], help='Algorithm to use.')
     args = parser.parse_args()
     
     # Read dataset and execute algorithm
     coords = read_tsp_file_from_disk(args.dataset)  # <-- Modified this line
+
+    start_time = time.time()
+
     if args.algorithm == 'brute_force':
         path, distance = brute_force_tsp(coords)
-        print(f"Brute-force: Path = {path}, Distance = {distance}")
-    elif args.algorithm == 'greedy':
-        path, distance = greedy_tsp(coords)
-        print(f"Greedy: Path = {path}, Distance = {distance}")
+    elif args.algorithm == 'nearest_neighbor':
+        path, distance = nearest_neighbor_tsp(coords)
+    elif args.algorithm == 'branch_and_bound':
+        path, distance = branch_and_bound_tsp(coords)
+    elif args.algorithm == 'held_karp':
+        path, distance = held_karp_tsp(coords)
+
+    totalTime = time.time() - start_time
+    print(f"{args.algorithm.replace('_', ' ').title()}: Path = {path}, Distance = {distance}, N = {len(coords)}")
+
+    print(f"Elapsed time: {totalTime} seconds")
+
+    # Plot the path
+    plot_path(coords, path, args.algorithm, distance, totalTime)
 
 
 # Entry point of the script
