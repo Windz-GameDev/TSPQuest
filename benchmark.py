@@ -80,24 +80,27 @@ def read_tsp_file(file_content):
     
     return coords
 
-# Brute-force algorithm for solving TSP
-def brute_force_tsp(coords):
-    min_distance = float('inf')  # Initialize min_distance to infinity
-    best_path = None  # Initialize best_path to None
+# Brute-force algorithm for solving the TSP
+def brute_force_tsp(coords): # Coords represents a list of tuples, the 0th element of any tupel represents the x element, and the 1st element of any tuple represents the y element
+    min_distance = float('inf')  # Keep track of shortest distance so far, start at infinity so all paths found will be less than initial value
+    best_path = None  # Keep track of the coordinate indices that represent the best path found so far
     
-    # Generate all possible permutations and calculate distance
-    for path in permutations(range(len(coords))):
-        distance = 0
-        for i in range(len(path) - 1):
-            distance += euclidean_distance(coords[path[i]], coords[path[i+1]])
-        distance += euclidean_distance(coords[path[-1]], coords[path[0]])
+    ''' Take the number of coordinates, generate a range of of numbers from that length, each representing a coordinate index, 
+    going from 0 to len(coords) - 1, and generate all permutations of that range, representing all paths we can take through the list of coordinates'''
+    for current_path in permutations(range(len(coords))): # Calculate the distance of each permutation or path
+        current_distance = 0 # Start with a distance of 0 for each path or permutation
+        for i in range(len(current_path) - 1): # We need to start stop before the final location in the path because we access the next index in the loop.
+            ''' We calculate the euclidean distance between two coordinates by calling the euclidean_distance function, 
+            We pass in two coordinate tuples from the coordinates list, accessing them using the path indices of the current location and the next in the path'''
+            current_distance += euclidean_distance(coords[current_path[i]], coords[current_path[i+1]]) 
+        current_distance += euclidean_distance(coords[current_path[-1]], coords[current_path[0]]) # Now, we connect the final location in the path to the starting position to complete the cycle
         
         # Update min_distance and best_path
-        if distance < min_distance:
-            min_distance = distance
-            best_path = path
+        if current_distance < min_distance: # If the current path distance just calculated is less than the stored minimum we've found so far, we have a new minimum and best path
+            min_distance = current_distance # Assign the new minimum euclidean distance to minimum distance
+            best_path = current_path # Assign the new best path permutation to best path, the indices representing the coordinates locations in the coords list of tuples 
     
-    return best_path, min_distance
+    return best_path, min_distance # Return the optimal answer to the TSP problem 
 
 # Greedy algorithm for solving TSP
 def nearest_neighbor_tsp(coords):
