@@ -35,6 +35,44 @@ The script uses the following TSP datasets, which were retrieved from [The Unive
 - `wi29.tsp`: Represents the locations of 29 cities in Western Sahara.
 - `ja9847.tsp`: Represents the locations of 9,847 cities in Japan.
 
+We also use our own TSP dataset generator, which is based on the file structure of the previously listed datasets.
+
+It can be run with the following command:
+
+## Running the TSP Generator Script
+
+Execute the TSP generator script by using the following command structure in your terminal:
+
+```bash
+python tsp_generator.py <num_cities> <output_file> [options]
+```
+
+### Parameters
+
+- `<num_cities>`: (Required) The number of cities you want to generate in the TSP dataset.
+- `<output_file>`: (Required) Specify the name of the file where the generated TSP dataset will be saved.
+
+### Options
+
+- `--name <dataset_name>`: Specify the name you wish to assign to your dataset.
+- `--comment "<comment>"`: Add a comment or description that will be included in the dataset.
+- `--min_coord <min_coordinate>`: Specify the minimum coordinate value for the cities in the dataset.
+- `--max_coord <max_coordinate>`: Specify the maximum coordinate value for the cities in the dataset.
+
+### Example
+
+```bash
+python tsp_generator.py 10 output.tsp --name MyDataset --comment "My custom comment" --min_coord 5000 --max_coord 25000
+```
+
+This example command will:
+- Generate a TSP dataset with 10 cities.
+- Save it to a file named `output.tsp`.
+- Name the dataset "MyDataset".
+- Include a custom comment "My custom comment".
+- Cities will have coordinates ranging between 5000 and 25000.
+
+
 ## Usage
 
 To run the script, use the following command:
