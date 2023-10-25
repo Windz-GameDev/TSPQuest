@@ -2,6 +2,20 @@
 
 This repository contains a benchmark Python script for solving the Traveling Salesman Problem (TSP) using different algorithms and analyzing those results.
 
+## Table of Contents
+
+- [Description](#description)
+- [Algorithms](#algorithms)
+- [Dataset](#dataset)
+- [Usage](#usage)
+  - [Running the TSP Generator Script](#running-the-tsp-generator-script)
+  - [Running the Benchmark Script](#running-the-benchmark-script)
+- [Dependencies](#dependencies)
+- [References](#references)
+- [Authors](#authors)
+- [Acknowledgements](#acknowledgements)
+- [Future Work](#future-work)
+
 ## Description
 
 The Traveling Salesman Problem (TSP) is a classic optimization problem in computer science. The goal is to find the shortest possible route that visits a set of cities and returns to the origin city. This repository provides implementations of various algorithms to solve the TSP, ranging from exact methods to heuristic and approximation algorithms.
@@ -37,7 +51,7 @@ The script uses the following TSP datasets, which were retrieved from [The Unive
 
 We also use our own TSP dataset generator, which is based on the file structure of the previously listed datasets.
 
-It can be run with the following command:
+## Usage
 
 ## Running the TSP Generator Script
 
@@ -73,21 +87,44 @@ This example command will:
 - Cities will have coordinates ranging between 5000 and 25000.
 
 
-## Usage
 
-To run the script, use the following command:
+## Running the Benchmark Script
 
-python benchmark.py Datasets/`dataset` `algorithm` `--timeout [# seconds]`
+Execute the benchmark script by using the following command structure in your terminal:
 
-Replace `dataset` with the name of the TSP dataset file (e.g., `lu98.tsp`), and `algorithm` with the algorithm you want to use (`brute_force`, `branch_and_bound`, `held_karp`, `nearest_neighbor`, `two_opt`, or `simulated_annealing`).
+```bash
+python benchmark.py Datasets/<dataset> <algorithm> [options]
+```
 
-For example, to solve the `lu98.tsp` dataset using the brute-force algorithm, run:
+### Parameters
 
+- `<dataset>`: (Required) The name of the TSP dataset file you wish to use (e.g., `lu98.tsp`).
+- `<algorithm>`: (Required) Specify the algorithm you want to use. Available algorithms include:
+  - `brute_force`
+  - `branch_and_bound`
+  - `held_karp`
+  - `nearest_neighbor`
+  - `two_opt`
+  - `simulated_annealing`
+
+### Options
+
+- `--timeout <# seconds>`: Specify a maximum number of seconds any one algorithm may attempt to solve the TSP. The default is 60 seconds.
+
+### Examples
+
+```bash
 python benchmark.py Datasets/lu98.tsp brute_force
+```
 
-By specifying a timeout, you specify a maximum number of seconds any one algorithm may attempt to solve the TSP, the default is 60.
+This example command will run the brute-force algorithm on the `lu98.tsp` dataset.
 
+```bash
 python benchmark.py Datasets/lu98.tsp brute_force --timeout 60
+```
+
+This command will run the brute-force algorithm on the `lu98.tsp` dataset with a timeout of 60 seconds.
+
 
 ## Dependencies
 
