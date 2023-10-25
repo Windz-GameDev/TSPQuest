@@ -34,7 +34,7 @@ def plot_path(coords, path, algorithm, total_distance, time):
     plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path
 
     # Add title
-    plt.title(f"{algorithm.replace('_', ' ').title()} - Cities: {len(coords)} - Distance (Euclidean): {total_distance} - Time (Seconds): {time}")
+    plt.title(f"{algorithm.replace('_', ' ').title()} - Cities: {len(coords)} - Distance (Euclidean): {round(total_distance, 4)} - Time (Seconds): {time}")
 
     # Add labels
     plt.xlabel("X-Axis")
