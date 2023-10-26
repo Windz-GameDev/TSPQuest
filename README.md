@@ -8,8 +8,10 @@ This repository contains a benchmark Python script for solving the Traveling Sal
 - [Algorithms](#algorithms)
 - [Dataset](#dataset)
 - [Usage](#usage)
-  - [Running the TSP Generator Script](#running-the-tsp-generator-script)
-  - [Running the Benchmark Script](#running-the-benchmark-script)
+  - [Running the `tsp_dataset_generator.py` Script](#running-the-tsp_dataset_generatorpy-script)
+  - [Running the `benchmark.py` Script](#running-the-benchmarkpy-script)
+  - [Running the `run_benchmark.py` Script](#running-the-run_benchmarkpy-script)
+  - [Running the `tsp_data_analyzer.py` Script](#running-the-tsp_data_analyzerpy-script)
 - [Dependencies](#dependencies)
 - [References](#references)
 - [Authors](#authors)
@@ -122,6 +124,35 @@ python benchmark.py Datasets/lu98.tsp brute_force --timeout 60
 ```
 
 This command will run the brute-force algorithm on the `lu98.tsp` dataset with a timeout of 60 seconds.
+
+## Running the `run_benchmark.py` Script
+
+Execute the `run_benchmark.py` script by using the following command structure in your terminal:
+
+```bash
+python run_benchmark.py <dataset> <csv_file> [options]
+```
+
+### Parameters
+- `<dataset>`: (Required) Specify the path to the dataset file.
+- `<csv_file>`: (Required) CSV file Name to save the results.
+
+### Options
+-`--timeout <# seconds>`: Specify how long any algorithm will run at max in seconds. The default is 60 seconds. 
+
+### Examples
+
+```bash
+python run_benchmark.py Datasets/wi4.tsp results.csv --timeout 5
+```
+
+This command will print the results of each algorithm on the `wi4.tsp` dataset, where each algorithm gets the default 60 seconds to run. The results will be stored in the `results.csv` file in the same directory as the run_benchmark.py file.
+
+```bash
+python run_benchmark.py Datasets/lu98.tsp results.csv --timeout 5
+```
+
+This command will print the results of each algorithm on the `lu98.tsp` dataset, where each algorithm will get 5 seconds at most to run. The results will be stored in the `results.csv` file in the same directory as the run_benchmark.py file.
 
 ## Running the `tsp_data_analyzer.py` Script
 
