@@ -53,7 +53,7 @@ We also use our own TSP dataset generator, which is based on the file structure 
 
 ## Usage
 
-## Running the TSP Generator Script
+## Running the `tsp_dataset_generator.py` Script
 
 Execute the TSP generator script by using the following command structure in your terminal:
 
@@ -86,9 +86,7 @@ This example command will:
 - Include a custom comment "My custom comment".
 - Cities will have coordinates ranging between 5000 and 25000.
 
-
-
-## Running the Benchmark Script
+## Running the `benchmark.py` Script
 
 Execute the benchmark script by using the following command structure in your terminal:
 
@@ -125,6 +123,30 @@ python benchmark.py Datasets/lu98.tsp brute_force --timeout 60
 
 This command will run the brute-force algorithm on the `lu98.tsp` dataset with a timeout of 60 seconds.
 
+## Running the `tsp_data_analyzer.py` Script
+
+Execute the TSP data analyzer script by using the following command structure in your terminal:
+
+```bash 
+python tsp_data_analyzer.py <input_file>
+```
+
+### Parameters
+
+- `<input_file>`: (Required) Specify the path to the CSV file containing the TSP algorithm performance results.
+
+### Example
+
+```bash
+python tsp_data_analyzer.py data.csv
+```
+
+This example command will:
+- Read the CSV file named `data.csv`.
+- Perform an analysis of the TSP algorithm results contained in the file.
+- Display the resulting visualizations.
+
+Please replace `data.csv` with the path to your actual CSV file. The CSV file should be in the correct format with the required columns ('Algorithm', 'Total Distance', 'Number of Cities', 'Elapsed Time (Seconds)', 'Dataset'). See the example CSV in this repository for reference.
 
 ## Dependencies
 
@@ -134,6 +156,7 @@ The scripts require Python and the following Python libraries:
 - `math`
 - `itertools`
 - `matplotlib`
+- `seaborn`
 - `func_timeout`
 
 ## References
