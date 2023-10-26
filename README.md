@@ -143,7 +143,7 @@ python tsp_data_analyzer.py data.csv
 
 This example command will:
 - Read the CSV file named `data.csv`.
-- Perform the analysis on the TSP algorithm results contained in the file.
+- Perform an analysis of the TSP algorithm results contained in the file.
 - Display the resulting visualizations.
 
 Please replace `data.csv` with the path to your actual CSV file. The CSV file should be in the correct format with the required columns ('Algorithm', 'Total Distance', 'Number of Cities', 'Elapsed Time (Seconds)', 'Dataset'). See the example CSV in this repository for reference.
