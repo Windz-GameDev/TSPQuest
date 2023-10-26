@@ -13,6 +13,8 @@ This repository contains a benchmark Python script for solving the Traveling Sal
   - [Running the `run_benchmark.py` Script](#running-the-run_benchmarkpy-script)
   - [Running the `tsp_data_analyzer.py` Script](#running-the-tsp_data_analyzerpy-script)
 - [Dependencies](#dependencies)
+  - [Standard Libraries](#standard-libraries-pre-installed-with-python)
+  - [External Libraries](#external-libraries-need-to-be-installed-separately)
 - [References](#references)
 - [Authors](#authors)
 - [Acknowledgements](#acknowledgements)
