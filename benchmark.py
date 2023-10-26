@@ -17,6 +17,7 @@ import argparse
 import math
 import time 
 import matplotlib.pyplot as plt
+import os
 from itertools import permutations
 from func_timeout import func_timeout, FunctionTimedOut
 
@@ -217,6 +218,8 @@ def main():
     parser.add_argument('algorithm', type=str, choices=['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp'], help='Algorithm to use.')
     parser.add_argument('--timeout', type=int, default=60, help='Timeout for the algorithm in seconds.')
     args = parser.parse_args()
+
+    dataset_filename = os.path.basename(args.dataset) # Extract filename from the dataset path
     
     # Read dataset and execute algorithm
     coords = read_tsp_file_from_disk(args.dataset)  # <-- Modified this line
@@ -226,14 +229,14 @@ def main():
     try:
         path, distance = func_timeout(args.timeout, run_algorithm, args=(args.algorithm, coords))
     except FunctionTimedOut:
-        print(f"{args.algorithm.replace('_', ' ').title()} took too long to run. Skipping...")
+        print(f"{args.algorithm.replace('_', ' ').title()} took too long to run for {dataset_filename} with {len(coords)} cities. Skipping...")
         return  # Exiting the function as the algorithm didn't complete within the timeout
 
     totalTime = time.time() - start_time
 
     if path is not None and distance is not None:
-        print(f"{args.algorithm.replace('_', ' ').title()}: Path = {path}, Distance = {distance}, N = {len(coords)}")
-        print(f"Elapsed time: {totalTime} seconds")
+        print(f"Dataset: {dataset_filename} | Algorithm: {args.algorithm.replace('_', ' ').title()} | Path: {path} | Number of locations: {len(coords)} | Distance: {distance} | Elapsed time: {totalTime} seconds")
+        
         # Plot the path
         plot_path(coords, path, args.algorithm, distance, totalTime)
 

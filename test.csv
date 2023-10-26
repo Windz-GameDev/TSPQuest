@@ -1,0 +1,9 @@
+Dataset,Algorithm,Number of Cities,Total Distance,Elapsed Time (Seconds)
+ja9847.tsp,Brute Force,9847,NaN,NaN
+ja9847.tsp,Nearest Neighbor,9847,NaN,NaN
+ja9847.tsp,Branch And Bound,9847,NaN,NaN
+ja9847.tsp,Held Karp,9847,NaN,NaN
+wi29.tsp,Brute Force,29,NaN,NaN
+wi29.tsp,Nearest Neighbor,29,36388.05923226534,0.0
+wi29.tsp,Branch And Bound,29,NaN,NaN
+wi29.tsp,Held Karp,29,NaN,NaN
