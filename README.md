@@ -53,7 +53,7 @@ We also use our own TSP dataset generator, which is based on the file structure 
 
 ## Usage
 
-## Running the TSP Generator Script
+## Running the `tsp_dataset_generator.py` Script
 
 Execute the TSP generator script by using the following command structure in your terminal:
 
@@ -86,7 +86,7 @@ This example command will:
 - Include a custom comment "My custom comment".
 - Cities will have coordinates ranging between 5000 and 25000.
 
-## Running the Benchmark Script
+## Running the `benchmark.py` Script
 
 Execute the benchmark script by using the following command structure in your terminal:
 
