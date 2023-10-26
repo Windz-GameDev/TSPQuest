@@ -114,16 +114,26 @@ python benchmark.py Datasets/<dataset> <algorithm> [options]
 ### Examples
 
 ```bash
-python benchmark.py Datasets/lu98.tsp brute_force
+python benchmark.py Datasets/lu98.tsp nearest_neighbor
 ```
 
-This example command will run the brute-force algorithm on the `lu98.tsp` dataset.
+This example command will:
+  -Run the nearest neighbor algorithm on the `lu98.tsp` dataset.
+  -It will have the default timeout of 60 seconds.
+  -It will display the dataset used, algorithm used, path, number of cities, total distance, and the elapsed time.
+  -It will visualize the final path using a scatterplot.
+  -If it times out, it will display skipping the algorithm.
 
 ```bash
-python benchmark.py Datasets/lu98.tsp brute_force --timeout 60
+python benchmark.py Datasets/lu98.tsp brute_force --timeout 5
 ```
 
-This command will run the brute-force algorithm on the `lu98.tsp` dataset with a timeout of 60 seconds.
+This example command will:
+  -Run the brute force algorithm on the `lu98.tsp` dataset.
+  -It will have a timeout of 5 seconds.
+  -If it finishes, it will display the dataset, the algorithm, the path, the number of cities, the total distance, and the elapsed time.
+  -It will visualize the final path using a scatterplot if it finishes.
+  -If it times out, it will display skipping the algorithm.
 
 ## Running the `run_benchmark.py` Script
 
