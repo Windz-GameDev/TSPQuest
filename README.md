@@ -146,13 +146,21 @@ python run_benchmark.py <dataset> <csv_file> [options]
 python run_benchmark.py Datasets/wi4.tsp results.csv --timeout 5
 ```
 
-This command will print the results of each algorithm on the `wi4.tsp` dataset, where each algorithm gets the default 60 seconds to run. The results will be stored in the `results.csv` file in the same directory as the run_benchmark.py file.
-
+This example command will:
+- This command will print the results of each algorithm on the `wi4.tsp` dataset
+- The results will be stored in the `results.csv` file in the same directory as the run_benchmark.py file.
+- Each algorithm gets the default 60 seconds to run.
+- If any algorithm times out, NaN will be filled in for distance and elapsed time for that algorithm on the CSV.
+ 
 ```bash
 python run_benchmark.py Datasets/lu98.tsp results.csv --timeout 5
 ```
 
-This command will print the results of each algorithm on the `lu98.tsp` dataset, where each algorithm will get 5 seconds at most to run. The results will be stored in the `results.csv` file in the same directory as the run_benchmark.py file.
+This example command will:
+- This command will print the results of each algorithm on the `lu98.tsp` dataset
+- The results will be stored in the `results.csv` file in the same directory as the run_benchmark.py file.
+- Any single algorithm gets 5 seconds at most to run.
+- If any algorithm times out, NaN will be filled in for distance and elapsed time in the CSV for that algorithm.
 
 ## Running the `tsp_data_analyzer.py` Script
 
