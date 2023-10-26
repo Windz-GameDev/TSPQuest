@@ -134,6 +134,7 @@ The scripts require Python and the following Python libraries:
 - `math`
 - `itertools`
 - `matplotlib`
+- `seaborn`
 - `func_timeout`
 
 ## References
