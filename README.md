@@ -201,12 +201,21 @@ Please replace `data.csv` with the path to your actual CSV file. The CSV file sh
 
 The scripts require Python and the following Python libraries:
 
+Standard Libraries (Pre-installed with Python)
 - `argparse`
 - `math`
 - `itertools`
+- `time`
+- `random`
+- `os`
+- `subprocess`
+- `csv`
+External Libraries (Need to be installed separately)
 - `matplotlib`
 - `seaborn`
+- `pandas`
 - `func_timeout`
+  
 
 ## References
 
