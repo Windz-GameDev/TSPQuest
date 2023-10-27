@@ -47,34 +47,40 @@ def visualize_data(df):
     # 3. Scatter Plot (Needs to be tested on actual data to verify it's working)
     # Create a figure for the scatter plot 
     plt.figure(figsize=(10, 6))
-    # Create a scatter plot to show the relationship between total distance and elapsed time of an algorithm execution
+    # Create a scatter plot to show the relationship between number of cities and elapsed time of an algorithm execution
     # Different algorithms are represented by different colors (hues)
-    sns.scatterplot(x='Total Distance', y='Elapsed Time (Seconds)', hue='Algorithm', data=df)
+    sns.scatterplot(x='Number of Cities', y='Elapsed Time (Seconds)', hue='Algorithm', data=df)
     # Set the title of the plot
-    plt.title('Relation between Total Distance and Elapsed Time')
+    plt.title('Relation between Number of Cities and Elapsed Time')
     # Display the plot
     plt.show()
 
-    # Needs work
-    '''# 4. Box Plots
+    # 4. Box Plots
     # Get the unique dataset names
     datasets = df['Dataset'].unique()
 
     # Iterating through each dataset and creating a box plot
     for dataset in datasets:
-        # Create a figure for the box plot
-        plt.figure(figsize=(10, 6))
 
         # Filter dataframe to only inlcude rows whose dataset column corresponds to the current dataset to be visualized
-        df_filtered = df[df['Dataset'] == dataset]
+        df_filtered = df[df['Dataset'] == dataset].dropna(subset=['Total Distance', 'Elapsed Time (Seconds)']) # Remove algorithms with NaNs to avoid breaking boxplot
     
+
+        # Check if there are any rows left to plot
+        if df_filtered.empty:
+            print(f"\nNo algorithms managed to solve the dataset {dataset} in the given timeout duration or no valid data...")
+            continue # Don't visualize this dataset, skip to next one
+
+
+        # Create a figure for the box plot
+        plt.figure(figsize=(10, 6))
 
         # Create a box plot to show distribution of total distances for each algorithm on a dataset
         sns.boxplot(x='Algorithm', y='Total Distance', data=df_filtered)
         # Set title of the plot
         plt.title(f'Distribution of Total Distance by Algorithm for {dataset}')
         # Display the plot
-        plt.show()'''
+        plt.show()
 
 
 def main():
