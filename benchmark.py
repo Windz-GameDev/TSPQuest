@@ -189,6 +189,7 @@ def nearest_neighbor_tsp(coords):
     found_distance += euclidean_distance(coords[current_city], coords[found_path[0]]) # Now that every city has been visited, we must return from the last city back to the start to complete the hamiltonian cycle
     return found_path, found_distance # Now that we have the path and total distance, we must return them so we can visualize the results
 
+# Branch and Bound algorithm for solving the TSP
 def branch_and_bound_tsp(coords):
     
     # Generate the distance matrix from the list of coordinate tuples
