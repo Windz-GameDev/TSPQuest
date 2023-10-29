@@ -1,14 +1,21 @@
 '''
     Source Code for Algorithms Project for COT6405
 
+<<<<<<< HEAD
     Algorithms for Brute Force, Nearest Neighor, Branch and Bound, Dynamic programming are 
     referenced from GeeksForGeeks to ensure accurate implementation. Datasets are either auto generated or sourced from
     The University of Waterloo in Waterloo, Ontario, Canada
     2-opt is referenced from KeiruaProd to ensure accurate implementation.
+=======
+    Algorithms for Brute Force, Nearest Neighor, and Dynamic programming are 
+    referenced from GeeksForGeeks to ensure accurate implementation. Branch and bround is
+    referenced from Abdul Bari's guide on youtube linked below.
+    Datasets are from The University of Waterloo.
+>>>>>>> origin/master
 
     References: 
     BruteForce - https://www.geeksforgeeks.org/traveling-salesman-problem-tsp-implementation/
-    Branch and Bound - https://www.geeksforgeeks.org/traveling-salesman-problem-using-branch-and-bound-2/
+    Branch and Bound - https://www.youtube.com/watch?v=1FEP_sNb62k&t=515s
     Dynamic Programming - https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/
     2-Opt - https://www.keiruaprod.fr/blog/2021/09/15/traveling-salesman-with-2-opt.html
     Greedy - https://www.geeksforgeeks.org/travelling-salesman-problem-greedy-approach/
@@ -21,8 +28,10 @@ import math
 import time 
 import matplotlib.pyplot as plt
 import os
+import heapq
 from itertools import permutations
 from func_timeout import func_timeout, FunctionTimedOut
+from copy import deepcopy
 
 def plot_path(coords, path, algorithm, total_distance, time):
     
@@ -46,6 +55,51 @@ def plot_path(coords, path, algorithm, total_distance, time):
 
     # Show the plot
     plt.show()
+
+def generate_distance_matrix(coords):
+    num_cities = len(coords)
+    '''
+    Generate a euclidean distance matrix for a list of coordinate tuples.
+
+    The distance for every city to itself should be infinity to avoid an algorithm considering loops which return to the same city.
+
+    The inner loop creates a row equal in length to the number of cities, and the router loop causes this loop
+    to execute a number of times equal to the number of cities. This results in a matrix with an equal number of 
+    rows and columns.
+    '''
+    matrix = [[float('inf') for city in range(num_cities)] for city in range(num_cities)] 
+     # Calculate the distance for each city i to every other city
+    for i in range(num_cities):
+        for j in range(num_cities): 
+            if i != j: # Any city traveling to itself should have a distance of 0, for example city 0 -> city 0 results in cost of 0
+                matrix[i][j] = euclidean_distance(coords[i], coords[j]) # Calculate the euclidean distance for each city pair, and use them to populate the distance matrix
+    return matrix
+
+def reduce_matrix(distance_matrix):
+    """
+        Perform row and column reduction on the matrix and calculate the reduction cost.
+    """
+
+    num_cities = len(distance_matrix)
+    cost = 0 # Initialize cost of reduction 0 
+
+    # Reduce row
+    for row in range(num_cities):
+        min_value = min(distance_matrix[row]) # Find the minimum value in the row
+        cost += min_value # Add minimum value from each row to the cost
+        if min_value != 0: # If min the minimum value is 0, the row is already reduced, no need to enter inner loop
+            for column in range(num_cities):
+                distance_matrix[row][column] -= min_value # Subtract the minimum value from every element in the row
+
+    # Reduce column
+    for column in range(num_cities): # Iterate through each column 
+        min_value = min(distance_matrix[row][column] for row in range(num_cities)) # Get the minimum value in the column
+        cost += min_value # Add minimum value from each column to the cost
+        if min_value != 0: # If min value was zero, no need to enter the inner loop
+            for row in range(num_cities):
+                distance_matrix[row][column] -= min_value # Subtract the min value from each row in the column
+
+    return distance_matrix, cost # Return reduced distance matrix, aditionally return the cost to be used in calculating the lower bound of a node 
 
 # Function to calculate Euclidean distance between two points
 def euclidean_distance(point1, point2):
@@ -169,44 +223,75 @@ def nearest_neighbor_tsp(coords):
     found_distance += euclidean_distance(coords[current_city], coords[found_path[0]]) # Now that every city has been visited, we must return from the last city back to the start to complete the hamiltonian cycle
     return found_path, found_distance # Now that we have the path and total distance, we must return them so we can visualize the results
 
-# Branch and bound method for solving TSP
+# Branch and Bound algorithm for solving the TSP
 def branch_and_bound_tsp(coords):
-    def calculate_lower_bound(path, remaining):
-        lb = sum(euclidean_distance(coords[path[i]], coords[path[i+1]]) for i in range(len(path)-1))
-        
-        # Adding the minimum distance to a city not yet visited
-        if remaining:
-            lb += min(euclidean_distance(coords[path[-1]], coords[k]) for k in remaining)
+    
+    # Generate the distance matrix from the list of coordinate tuples
+    distance_matrix = generate_distance_matrix(coords)
+
+    # Define a node class for our state based tree which will store a node's path, it's reduced matrix, and its cost
+    class Node:
+        def __init__(self, matrix, cost, path, num_cities, unvisited):
+            self.matrix = matrix
+            self.cost = cost
+            self.path = path
+            self.num_cities = num_cities
+            self.unvisited = unvisited 
+
+        # Define how we compare a node to another node so they can be correctly inserted into a min heap, and we can always dequeue the node with the lowest cost
+        def __lt__(self, other):
+            return self.cost < other.cost # Return true if the lowerbound for this node is lower than the one being compared to
+
+        @property # Allow is_complete_tour to be accessed without parenthesis by defining it as a property 
+        def is_complete_tour(self):
+            return len(self.path) == self.num_cities # Check if tour is complete (node is a leaf node)
+ 
+    best_path, upper_bound = nearest_neighbor_tsp(coords) # Get an upperbound and starting path using NN. All node costs must less than upperbound to avoid being pruned
+
+    distance_matrix, starting_cost = reduce_matrix(distance_matrix)
+    starting_node = Node(distance_matrix, starting_cost, [0], len(coords), set(range(len(coords))))
+    starting_node.unvisited.remove(0) # Remove starting city from unvisited for starting node
+    priority_queue = [starting_node] # Our priority queue ensures we always explore the node with the lowest cost first, and at first containins only the root
+
+    while priority_queue:
+        current_node = heapq.heappop(priority_queue)
+        if (current_node.is_complete_tour):
+            if (current_node.cost < upper_bound):
+                upper_bound = current_node.cost + euclidean_distance(coords[current_node.path[-1]], coords[current_node.path[0]]) # Only update upper if leaf node is reached and a better solution is found
+                best_path = current_node.path + [0] # Add the starting city to complete the tour
+                continue
+
+        for unvisited in current_node.unvisited: 
+            child_matrix = deepcopy(current_node.matrix) # Start with a copy of parent matrix
             
-            for city in remaining: 
-                # Check if there are cities remaining to compare distance
-                remaining_cities = remaining-{city}
-                if remaining_cities:  # Check if there are still cities remaining
-                    lb += min(euclidean_distance(coords[city], coords[k]) for k in remaining_cities)
-        
-        return lb
+            # Set values in the row for the beginning city to infinity
+            row = current_node.path[-1]
+            for column in range(len(coords)):
+                child_matrix[row][column] = float('inf')
 
-    best_tour = []
-    best_distance = float('inf')
+            # Set values in the column for the destination city to infinity
+            column = unvisited
+            for row in range(len(coords)):
+                child_matrix[row][column] = float('inf')    
 
-    def search(path, remaining):
-        nonlocal best_tour, best_distance
-        if not remaining:
-            total_distance = sum(euclidean_distance(coords[path[i]], coords[path[i+1]]) for i in range(len(path)-1))
-            total_distance += euclidean_distance(coords[path[-1]], coords[path[0]])
+            # Set distance the from child city to the beginning city in the path to infinity
+            child_matrix[unvisited][0] = float('inf')
+
+            # Reduce child matrix
+            child_matrix, reduced_cost = reduce_matrix(child_matrix)
+
+            # Find cost of child node, add distance from previous city to next city, the cost of the previous node, and the cost to reduce the matrix of the child node
+            child_cost = current_node.matrix[current_node.path[-1]][unvisited] + current_node.cost + reduced_cost
             
-            if total_distance < best_distance:
-                best_distance = total_distance
-                best_tour = list(path)
-            
-            return
+            # If child cost is less than the upper bound, create a new node and enqueue it, otherwise prune it as it's not worth exploring further
+            if (child_cost < upper_bound):
+                child_path = current_node.path[:] + [unvisited]
+                child_unvisited = deepcopy(current_node.unvisited)
+                child_unvisited.remove(unvisited)           
+                child_node = Node(child_matrix, child_cost, child_path, len(coords), child_unvisited)
+                heapq.heappush(priority_queue, child_node)
 
-        for next_city in remaining:
-            if calculate_lower_bound(path + [next_city], remaining - {next_city}) < best_distance:
-                search(path + [next_city], remaining - {next_city})
-
-    search([0], set(i for i in range(1, len(coords))))
-    return best_tour, best_distance
+    return best_path, upper_bound # Return the best path and minimum cost 
 
 def held_karp_tsp(coords):
     n = len(coords)
