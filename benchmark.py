@@ -36,7 +36,7 @@ def plot_path(coords, path, algorithm, total_distance, time):
     # Plot the path taken
     for i in range(len(path) - 1): # Stop at one less than the final city because final city will try to connect to a city out of bounds
         plt.plot((coords[path[i]][0], coords[path[i+1]][0]), (coords[path[i]][1], coords[path[i+1]][1]), 'r-') # First argument is a tuple containing the x coordinates of the first and second city, the second tuple is for the y coordinates respectively
-    plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path
+    # plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path incase the first city was not appended to the end of the path list
 
     # Add title
     plt.title(f"{algorithm.replace('_', ' ').title()} - Cities: {len(coords)} - Distance (Euclidean): {round(total_distance, 4)} - Time (Seconds): {time}")
@@ -48,18 +48,19 @@ def plot_path(coords, path, algorithm, total_distance, time):
     # Show the plot
     plt.show()
 
-def generate_distance_matrix(coords):
+def generate_distance_matrix(coords, self_distance = 0):
     num_cities = len(coords)
     '''
     Generate a euclidean distance matrix for a list of coordinate tuples.
 
-    The distance for every city to itself should be infinity to avoid an algorithm considering loops which return to the same city.
+    The self distance for every city to itself should be infinity for Branch and Bound to avoid an algorithm considering loops which return to the same city.
+    However, it is 0 by default for other algorithms.
 
     The inner loop creates a row equal in length to the number of cities, and the router loop causes this loop
     to execute a number of times equal to the number of cities. This results in a matrix with an equal number of 
     rows and columns.
     '''
-    matrix = [[float('inf') for city in range(num_cities)] for city in range(num_cities)] 
+    matrix = [[self_distance for city in range(num_cities)] for city in range(num_cities)] 
      # Calculate the distance for each city i to every other city
     for i in range(num_cities):
         for j in range(num_cities): 
@@ -144,12 +145,13 @@ def brute_force_tsp(coords): # Coords represents a list of tuples, the 0th eleme
             We pass in two coordinate tuples from the coordinates list, accessing them using the path indices of the current location and the next in the path'''
             current_distance += euclidean_distance(coords[current_path[i]], coords[current_path[i+1]]) 
         current_distance += euclidean_distance(coords[current_path[-1]], coords[current_path[0]]) # Now, we connect the final location in the path to the starting position to complete the cycle
-        
+ 
         # Update min_distance and best_path
         if current_distance < min_distance: # If the current path distance just calculated is less than the stored minimum we've found so far, we have a new minimum and best path
             min_distance = current_distance # Assign the new minimum euclidean distance to minimum distance
-            best_path = current_path # Assign the new best path permutation to best path, the indices representing the coordinates locations in the coords list of tuples 
+            best_path = list(current_path) # Assign a list copy of the new best path permutation tuple to best path, the indices representing the coordinates locations in the coords list of tuples 
     
+    best_path.append(best_path[0]) # Make the first element of the best path the last element as well to complete the hamiltonian cycle
     return best_path, min_distance # Return the optimal answer to the TSP problem 
 
 # Greedy algorithm for solving TSP
@@ -187,13 +189,14 @@ def nearest_neighbor_tsp(coords):
         cities_left_to_visit.remove(current_city) # Our current city has been visited so we should not travel to it again according to the definition of the TSP problem
     
     found_distance += euclidean_distance(coords[current_city], coords[found_path[0]]) # Now that every city has been visited, we must return from the last city back to the start to complete the hamiltonian cycle
+    found_path.append(found_path[0])
     return found_path, found_distance # Now that we have the path and total distance, we must return them so we can visualize the results
 
 # Branch and Bound algorithm for solving the TSP
 def branch_and_bound_tsp(coords):
     
     # Generate the distance matrix from the list of coordinate tuples
-    distance_matrix = generate_distance_matrix(coords)
+    distance_matrix = generate_distance_matrix(coords, float('inf'))
 
     # Define a node class for our state based tree which will store a node's path, it's reduced matrix, and its cost
     class Node:
@@ -222,9 +225,10 @@ def branch_and_bound_tsp(coords):
     while priority_queue:
         current_node = heapq.heappop(priority_queue)
         if (current_node.is_complete_tour):
-            if (current_node.cost < upper_bound):
-                upper_bound = current_node.cost + euclidean_distance(coords[current_node.path[-1]], coords[current_node.path[0]]) # Only update upper if leaf node is reached and a better solution is found
-                best_path = current_node.path + [0] # Add the starting city to complete the tour
+            complete_tour_cost = current_node.cost + euclidean_distance(coords[current_node.path[-1]], coords[current_node.path[0]]) # Get total cost of the tour, including from the last node to the first node
+            if (complete_tour_cost < upper_bound): # If total cost of the tour is less than the upperbound, update upperbound
+                upper_bound = complete_tour_cost
+                best_path = current_node.path + [0] # Add the starting city to complete the new best path
                 continue
 
         for unvisited in current_node.unvisited: 
@@ -260,42 +264,9 @@ def branch_and_bound_tsp(coords):
     return best_path, upper_bound # Return the best path and minimum cost 
 
 def held_karp_tsp(coords):
-    n = len(coords)
-    distances = [[euclidean_distance(coords[i], coords[j]) for j in range(n)] for i in range(n)]
-    memo = {}
+    num_cities = len(coords)
+    distance_matrix = generate_distance_matrix(coords, 0)
 
-    def hk_recursive(S, j):
-        if S == (1 << j):
-            return distances[0][j]
-        if (S, j) in memo:
-            return memo[(S, j)]
-
-        costs = [
-            hk_recursive(S & ~(1 << j), k) + distances[k][j]
-            for k in range(1, n) if S & (1 << k) and k != j
-        ]
-        
-        if costs:
-            memo[(S, j)] = min(costs)
-        else:
-            memo[(S, j)] = float('inf')  # No valid cost, set to infinity
-        
-        return memo[(S, j)]
-
-    min_cost = min(hk_recursive((1 << n) - 2, j) + distances[j][0] for j in range(1, n))
-    
-    # Reconstructing the path
-    S, j, path = (1 << n) - 2, 0, [0]
-    for _ in range(n-1):
-        j = min(
-            ((k, distances[j][k] + hk_recursive(S & ~(1 << k), k))
-             for k in range(1, n) if S & (1 << k)),
-            key=lambda x: x[1]
-        )[0]
-        S &= ~(1 << j)
-        path.append(j)
-    
-    return path, min_cost
 
 def run_algorithm(algorithm, coords):
     if algorithm == 'brute_force':
