@@ -212,6 +212,8 @@ The scripts require Python and the following Python libraries:
 - `os`
 - `subprocess`
 - `csv`
+- `copy`
+- `heapq`
   
 ### External Libraries (Need to be installed separately)
 - `matplotlib`
