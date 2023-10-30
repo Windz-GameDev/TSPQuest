@@ -1,15 +1,15 @@
 '''
     Source Code for Algorithms Project for COT6405
 
-    Algorithms for Brute Force, Nearest Neighor, and Dynamic programming are 
+    Algorithms for Brute Force, and Nearest Neighor were initially 
     referenced from GeeksForGeeks to ensure accurate implementation. Branch and bround is
-    referenced from Abdul Bari's guide on youtube linked below.
-    Datasets are from The University of Waterloo.
+    referenced from Abdul Bari's guide on youtube linked below. Dynamic Programming solution 
+    used multiple resources as a reference. Datasets are from The University of Waterloo.
 
     References: 
     BruteForce - https://www.geeksforgeeks.org/traveling-salesman-problem-tsp-implementation/
     Branch and Bound - https://www.youtube.com/watch?v=1FEP_sNb62k&t=515s
-    Dynamic Programming - https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/
+    Dynamic Programming - https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/, https://www.youtube.com/watch?v=Q4zHb-Swzro&t=0s, https://www.youtube.com/watch?v=JE0JE8ce1V0&t=705s
     Greedy - https://www.geeksforgeeks.org/travelling-salesman-problem-greedy-approach/
     Datasets - http://www.math.uwaterloo.ca/tsp/world/countries.html
 '''
@@ -37,6 +37,10 @@ def plot_path(coords, path, algorithm, total_distance, time):
     for i in range(len(path) - 1): # Stop at one less than the final city because final city will try to connect to a city out of bounds
         plt.plot((coords[path[i]][0], coords[path[i+1]][0]), (coords[path[i]][1], coords[path[i+1]][1]), 'r-') # First argument is a tuple containing the x coordinates of the first and second city, the second tuple is for the y coordinates respectively
     # plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path incase the first city was not appended to the end of the path list
+
+    # Label the starting node as "Start"
+    start_x, start_y = coords[path[0]]
+    plt.text(start_x, start_y, 'Start', fontsize=10, ha='right', weight='bold')
 
     # Add title
     plt.title(f"{algorithm.replace('_', ' ').title()} - Cities: {len(coords)} - Distance (Euclidean): {round(total_distance, 4)} - Time (Seconds): {time}")
@@ -263,11 +267,143 @@ def branch_and_bound_tsp(coords):
 
     return best_path, upper_bound # Return the best path and minimum cost 
 
-def held_karp_tsp(coords):
+# Dynamic programming algorithm for solving the TSP 
+def held_karp_tsp(coords):    
+    def recursion(currently_visited, city):
+        # Base case, reached end city in the path, calculate the distance from the final node, to the starting node
+        if(currently_visited == all_cities_visited):
+            # Cost of the city to an empty unvisited subset is the distance from the city to the starting city 
+            memo[city][currently_visited] = (distance_matrix[city][0], 0);
+            return memo[city][currently_visited][0] # Return cost stored in the memo table
+
+        # The min cost from this city to the next optimal city in this subset of unvisited cities have already been calculated, return it from the memoization table 
+        if (memo[city][currently_visited][0] != float('inf')):
+            return memo[city][currently_visited][0] 
+
+        # For each point in the path start, with a min cost of infinity, update everytime you find a next city that leads to a shorter cost
+        min_cost = float('inf')
+        min_city = None
+
+        # Check for unvisited cities
+        for next_city in range(num_cities):
+            '''
+                1 << next_city will create a binary number with only the bit representing the integer index value held by next_city, set to 1
+                
+                currently_visited & (i << next_city) performs a bitwise AND between the currently visited bit_mask and 
+                the binary number with only the next city's index set to one
+
+                The above bitwise AND operation creates a new binary number, where there can only be one bit set 
+                to one. That is if the number held by next_city's bit that was set to one in 1 << next_city is also set to one in currently_visited, 
+                which means that city already been visited. Here is a visual example:
+
+                
+                00101 = currently visited
+                00001 = 1 << next_city where next_city = 0
+
+                00101 & 00001 = 000001
+                Since 000001 != 0, it's 1, we know the 0th city by has been visited.
+
+                Take the counter example
+
+                00101 = currently visited
+                00010 = 1 << next_city where next_city = 1
+
+                00101 & 00010 = 00000,
+                Since 00000 == 0, we know that the 1st city has not visited, so we should explore it. 
+
+
+                In short, if the binary number as a result of the bitwise AND
+                is 0, the number held by next_city's bit in the currently_visited bitmask is 0, and the current next city
+                in num_cities has not been visited yet, meaning we should explore it. 
+            '''
+            if ((currently_visited & (1 << next_city)) == 0):
+                '''
+                    Get the cost of this city to the next unvisited one, and the cost of the rest of the optimal decisions down this path
+
+                    When we are passing the new bit mask represent the new visited cities for the next city. We simply set the bit at 
+                    index next_city to 1 by using a bitwise OR operation. A bit wise OR operation traverses each bit in both binary numbers,
+                    and if either bit in a position is one, the resulting binary number is set to 1 for that bit position. 
+
+                    See the below example:
+
+                    00101 = currently visited
+                    00010 = 1 << next_city where next_city = 1
+
+                    00101 OR 00010 = 00111
+
+                    The binary 00111 binary number means that the 0th, 1st, and 2nd city have all been visited. This is important for making sure a city does 
+                    not revisit itself.  
+
+                    next_city is merely a city's coordinate index in the coordinate list of tuples
+                '''
+                next_city_cost = distance_matrix[city][next_city] + recursion(currently_visited | (1 << next_city), next_city)
+                
+                # Cost for taking this city next from the previous city is less than the currently found minimum cost, so update it
+                if (next_city_cost < min_cost):
+                    min_cost = next_city_cost
+                    min_city = next_city
+                    # Store the min cost so far from this city to every city in the set of currently unvisited cities, as well as the next optimal city
+
+        # No more unvisited cities, we have the minimum cost for this city to this subset so we return it up to the next level
+        memo[city][currently_visited] = (min_cost, min_city)
+        return memo[city][currently_visited][0]
+    def reconstruct_path():
+        # Bitmask where first city (0) is visited and all others are unvisited
+        currently_visited = 1 << 0
+        
+        best_path = [0] # We always start from city 0
+        next_city = 0 # Initialize with starting city
+        
+        # While not all cities have been visited, or the bit mask does not have all bits set to 1 for each city
+        while currently_visited != (1 << num_cities) - 1:
+            min_cost, next_city = memo[best_path[-1]][currently_visited]
+            
+            # For troubleshooting
+            if next_city is None: 
+                raise ValueError(f'No next city found for city {best_path[-1]} and visited cities {currently_visited}')
+            
+            # Add the next optimal city to the best path that we just found from the memo table
+            best_path.append(next_city)
+            
+            # Mark the next city as visited in the bit mask
+            currently_visited = currently_visited | (1 << next_city) # 0 or 1 is always 1
+        
+        # Add the starting city to complete the hamiltonian cycle
+        best_path.append(0)
+        return best_path
+
+
     num_cities = len(coords)
     distance_matrix = generate_distance_matrix(coords, 0)
+    ''' 
+        Create a 2D list with 2^n columns and n rows where n represents the number of ciites.
+        Each row corresponds to a city, and each column corresponds to a subset of cities.
 
+        Each cell contains a tuple holding the minimum cost to visit all cities in a subset, 
+        and the next city in the optimal path which is necessary for back tracking.
 
+        Ex: 
+            
+        memo[i][j] represents the minimum cost to travel from a city i, to visit all cities
+        in a subset j.
+
+    '''
+    memo = [[(float('inf'), None) for _ in range(1 << num_cities)] for _ in range(num_cities)]
+    '''
+        A left shift operation that shifts the binary representation of the number 1 to the left by num_cities places,.
+        creating a binary number with a number of bits equal to the number of cities + 1, where each bit except 
+        the first is set to 0 except the last. If there five cities, this would produce 100000. Which is equal to 2^5 or 32 in binary. 
+        Then, it subtracts 1 from this binary number to give us 11111 to give us a binary number with a number of bits equal to the
+        number of cities, or 31. 
+        
+    '''
+    all_cities_visited = (1 << num_cities) - 1 
+    track_visited_cities = 1 << 0 # Create a binary number holding 1, this represents our starting point in the algorithm, the 0th city
+    final_cost = recursion(track_visited_cities, 0)
+    final_path = reconstruct_path()
+
+    return final_path, final_cost
+  
 def run_algorithm(algorithm, coords):
     if algorithm == 'brute_force':
         return brute_force_tsp(coords)
