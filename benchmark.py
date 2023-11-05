@@ -18,20 +18,31 @@
     Branch and Bound - https://www.youtube.com/watch?v=1FEP_sNb62k&t=515s
     Dynamic Programming - https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/
     2-Opt - https://www.keiruaprod.fr/blog/2021/09/15/traveling-salesman-with-2-opt.html
+    Christofides - 
+        Prim's algorithm portion of Christofides - https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/
+        Other aspects of Christofides - 
+            https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.operators.binary.compose.html
+            http://matejgazda.com/christofides-algorithm-in-python/
+            https://www.youtube.com/watch?v=Uu2ptesvteE
+            https://notebook.community/DhashS/Olin-Complexity-Final-Project/code/03_approximation_algorithms
+            https://networkx.org/documentation/stable/reference/convert.html
     Greedy - https://www.geeksforgeeks.org/travelling-salesman-problem-greedy-approach/
     Datasets - http://www.math.uwaterloo.ca/tsp/world/countries.html
 '''
 
 # Import required libraries
+import sys
 import argparse
 import math
 import time 
 import matplotlib.pyplot as plt
 import os
 import heapq
+import networkx
 from itertools import permutations
 from func_timeout import func_timeout, FunctionTimedOut
 from copy import deepcopy
+from networkx import *
 
 def plot_path(coords, path, algorithm, total_distance, time):
     
@@ -163,6 +174,26 @@ def distTotal (route, coordins):
         
     return distAmount
 
+'''
+    
+    This mstMinKey function allows for one to find the vertex, that is not yet included, 
+    with the smallest distance value.
+    
+'''
+
+def mstMinKey (coords, mstKeyVal, mstMinSetVals):
+    
+    mstMinVal = sys.maxsize
+    
+    for kObj in range(len(coords)): 
+        
+        if mstKeyVal[kObj] < mstMinVal and mstMinSetVals[kObj] == False:
+            
+            mstMinVal = mstKeyVal[kObj]
+            mstMinIndexNum = kObj
+            
+    return mstMinIndexNum
+    
 
 # Brute-force algorithm for solving the TSP
 def brute_force_tsp(coords): # Coords represents a list of tuples, the 0th element of any tupel represents the x element, and the 1st element of any tuple represents the y element
@@ -405,6 +436,116 @@ def two_opt_tsp(coords):
     
     return currentRoute, currentDist
 
+def christofides_tsp(coords): 
+    
+    '''
+        
+        Christofides must first find MST from prims algorithm.
+        
+    '''
+    
+    #This generates the distance matrix, using the function also used in branch and bound
+    christofidesMatrix = generate_distance_matrix(coords)
+    
+    christofidesGraph = [[0 for column in range(len(coords))] for row in range(len(coords))]
+    
+    christofidesGraph = christofidesMatrix
+    
+    christofidesGraph[0][0] = 0
+    
+    '''
+        
+        Three above lines intialize the graph that must be used for prims to work.
+        
+    '''
+    
+    christofKey = [sys.maxsize] * len(coords)
+    
+    christofParent = [None] * len(coords)
+    
+    mstMinSet = [False] * len(coords)
+    
+    christofParent[0] = -1
+    
+    for chTrCounter in range(len(coords)): 
+        
+        numDistanceVertex = mstMinKey(coords, christofKey, mstMinSet)
+        
+        mstMinSet[numDistanceVertex] = True
+        
+        for coordNumCount in range(len(coords)): 
+            
+            if christofidesGraph[chTrCounter][coordNumCount] > 0 and mstMinSet[coordNumCount] == False and christofKey[coordNumCount] > christofidesGraph[chTrCounter][coordNumCount]: 
+                
+                christofKey[coordNumCount] = christofidesGraph[chTrCounter][coordNumCount]
+                christofParent[coordNumCount] = chTrCounter
+                
+    '''
+        
+        END OF MST portion of Christofides
+        
+    '''
+    
+    nxGraph = Graph()
+    
+    nxGraph.add_nodes_from(range(len(coords)))
+    
+    for nxItemOne in range(len(coords)): 
+        
+        for nxItemTwo in range(len(coords)): 
+            
+            nxGraph.add_edge(nxItemOne, nxItemTwo, weight=christofidesMatrix[nxItemOne][nxItemTwo])
+            
+        
+    #Above 2 loops converts mst into networkx format.
+    
+    for oddVert in nxGraph.nodes(): 
+        
+        if nxGraph.degree(oddVert) % 2 != 0: 
+            
+            oddDegrees.append[oddVert]
+            
+    #Above loop gets odd degree vertices and puts them in a loop.
+    
+    oddDegreeGraph = Graph()
+    
+    oddDegreeGraph.add_nodes_from(oddDegrees)
+    
+    for s, t in oddDegreeGraph.edges: 
+        
+        oddDegreeGraph[s][t]['weight'] *= -1
+        
+    
+    minWeightGraph = max_weight_matching(oddDegreeGraph, maxcardinality = True)
+    
+    for s, t in oddDegreeGraph.edges: 
+        
+        oddDegreeGraph[s][t]['weight'] *= -1
+        
+    
+    multiGraphGraph = compose(nxGraph, minWeightGraph)
+    
+    chEulerianCircuit = list(eulerian_circuit(multiGraphGraph))
+    
+    chSingleCircuit = []
+    
+    for CircEdge in chEulerianCircuit: 
+        
+        if CircEdge not in chSingleCircuit: 
+            
+            chSingleCircuit.append(CircEdge)
+            
+        
+    #Above is changing it so each only appears once.
+    
+    for finalEdges in chSingleCircuit: 
+        
+        finalWeightChristofides += multiGraphGraph[finalEdges[0]][finalEdges[1]]['weight']
+        
+        currentRouteCh.append((finalEdges[0], finalEdges[1]))
+        
+    return currentRouteCh, finalWeightChristofides
+
 def run_algorithm(algorithm, coords):
     if algorithm == 'brute_force':
         return brute_force_tsp(coords)
@@ -416,12 +557,14 @@ def run_algorithm(algorithm, coords):
         return held_karp_tsp(coords)
     elif algorithm == 'two_opt':
         return two_opt_tsp(coords)
+    elif algorithm == 'christofides':
+        return christofides_tsp(coords)
 
 def main():
     # Argument parsing
     parser = argparse.ArgumentParser(description='Solve TSP problem using different algorithms.')
     parser.add_argument('dataset', type=str, help='TSP dataset file path.')
-    parser.add_argument('algorithm', type=str, choices=['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp', 'two_opt'], help='Algorithm to use.')
+    parser.add_argument('algorithm', type=str, choices=['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp', 'two_opt', 'christofides'], help='Algorithm to use.')
     parser.add_argument('--timeout', type=int, default=60, help='Timeout for the algorithm in seconds.')
     args = parser.parse_args()
 
