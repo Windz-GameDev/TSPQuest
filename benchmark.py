@@ -27,6 +27,10 @@
             https://notebook.community/DhashS/Olin-Complexity-Final-Project/code/03_approximation_algorithms
             https://networkx.org/documentation/stable/reference/convert.html
     Greedy - https://www.geeksforgeeks.org/travelling-salesman-problem-greedy-approach/
+    Ant Colony - 
+        1. https://induraj2020.medium.com/implementation-of-ant-colony-optimization-using-python-solve-traveling-salesman-problem-9c14d3114475#:~:text=Implementing%20Ant%20colony%20optimization%20in%20python%2D%20solving%20Traveling%20salesman%20problem,-Induraj&text=Ant%20colony%20optimization%20(ACO)%20is,by%20the%20behavior%20of%20ants.
+        2. https://github.com/Josephbakulikira/Traveling-Salesman-Algorithm/blob/master/antColony.py 
+        3. https://www.youtube.com/watch?v=EJKdmEbGre8
     Datasets - http://www.math.uwaterloo.ca/tsp/world/countries.html
 '''
 
