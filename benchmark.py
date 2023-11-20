@@ -39,10 +39,14 @@ import matplotlib.pyplot as plt
 import os
 import heapq
 import networkx
+from numpy import *
 from itertools import permutations
 from func_timeout import func_timeout, FunctionTimedOut
 from copy import deepcopy
 from networkx import *
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import *
+
 
 def plot_path(coords, path, algorithm, total_distance, time):
     
@@ -546,6 +550,73 @@ def christofides_tsp(coords):
         
     return currentRouteCh, finalWeightChristofides
 
+def ant_colony_tsp(coords): 
+    
+    pheremoneVals = ones((len(coords), len(coords)))
+    
+    antDistanceVals = generate_distance_matrix(coords)
+    
+    bestPathVal = None
+    
+    bestDistVal = float('inf')
+    
+    iterationNumVal = max(100, len(coords)*5)
+    
+    antNumVal = max(10, len(coords)//2)
+    
+    #Above this initialize everything.
+    
+    for runs in range(iterationNumVal): 
+        
+        antCurPaths = []
+        pathLenVals = []
+        
+        for ants in range(antNumVal): 
+            
+            curCityVal = random.randint(len(coords))
+            
+            visitCityList = [curCityVal]
+            
+            totDistTrav = 0
+            #3 lines above intialize each ant's travels
+            
+            #This loop runs until all cities are visited
+            while len(visitCityList) < len(coords): 
+                
+                notVisitedCityList = [place for place in range(len(coords)) if place not in visitCityList] #This line makes a list of the cities that have not been visited yet.
+                
+                nearCityVal = min(notVisitedCityList, key = lambda city: antDistanceVals[curCityVal][city])
+                
+                distNearCity = antDistanceVals[curCityVal][nearCityVal]
+                #Accessing matrix to find nearest city and distance to nearest city.
+                
+                totDistTrav = totDistTrav + distNearCity
+                
+                visitCityList.append(nearCityVal)
+                curCityVal = nearCityVal
+                
+            #return to start
+            totDistTrav = antDistanceVals[curCityVal][visitCityList[0]]
+            
+            antCurPaths.append(visitCityList)
+            
+            pathLenVals.append(totDistTrav)
+            
+        pheromoneVals *= 0.9
+        
+        for path, distVal in zip(antCurPaths, pathLenVals): 
+            
+            for itemValues in range(len(path) - 1): 
+                
+                pheremoneVals[path[i]][path[i+1]] += 1/distVal
+                pheremoneVals[path[i+1]][path[i]] += 1/distVal
+                
+    bestPathIndVal = argmin(pathLenVals)
+    bestPathVal = antCurPaths[bestPathIndVal]
+    bestDistVal = pathLenVals[bestPathIndVal]
+    
+    return bestPathVal, bestDistVal
+
 def run_algorithm(algorithm, coords):
     if algorithm == 'brute_force':
         return brute_force_tsp(coords)
@@ -559,12 +630,14 @@ def run_algorithm(algorithm, coords):
         return two_opt_tsp(coords)
     elif algorithm == 'christofides':
         return christofides_tsp(coords)
+    elif algorithm == 'ant_colony':
+        return ant_colony_tsp(coords)
 
 def main():
     # Argument parsing
     parser = argparse.ArgumentParser(description='Solve TSP problem using different algorithms.')
     parser.add_argument('dataset', type=str, help='TSP dataset file path.')
-    parser.add_argument('algorithm', type=str, choices=['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp', 'two_opt', 'christofides'], help='Algorithm to use.')
+    parser.add_argument('algorithm', type=str, choices=['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp', 'two_opt', 'christofides', 'ant_colony'], help='Algorithm to use.')
     parser.add_argument('--timeout', type=int, default=60, help='Timeout for the algorithm in seconds.')
     args = parser.parse_args()
 
