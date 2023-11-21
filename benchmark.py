@@ -31,6 +31,13 @@
         1. https://induraj2020.medium.com/implementation-of-ant-colony-optimization-using-python-solve-traveling-salesman-problem-9c14d3114475#:~:text=Implementing%20Ant%20colony%20optimization%20in%20python%2D%20solving%20Traveling%20salesman%20problem,-Induraj&text=Ant%20colony%20optimization%20(ACO)%20is,by%20the%20behavior%20of%20ants.
         2. https://github.com/Josephbakulikira/Traveling-Salesman-Algorithm/blob/master/antColony.py 
         3. https://www.youtube.com/watch?v=EJKdmEbGre8
+    Simulated Annealing Sources - 
+        1. https://medium.com/swlh/how-to-implement-simulated-annealing-algorithm-in-python-ab196c2f56a0
+        2. https://machinelearningmastery.com/simulated-annealing-from-scratch-in-python/
+        3. https://github.com/perrygeo/simanneal/blob/master/simanneal/anneal.py 
+        4. https://nathanrooy.github.io/posts/2020-05-14/simulated-annealing-with-python/ 
+        5. https://towardsdatascience.com/optimization-techniques-simulated-annealing-d6a4785a1de7
+        6. https://www.baeldung.com/cs/simulated-annealing 
     Datasets - http://www.math.uwaterloo.ca/tsp/world/countries.html
 '''
 
@@ -43,6 +50,9 @@ import matplotlib.pyplot as plt
 import os
 import heapq
 import networkx
+import random
+from math import *
+from random import *
 from numpy import *
 from itertools import permutations
 from func_timeout import func_timeout, FunctionTimedOut
@@ -93,6 +103,19 @@ def generate_distance_matrix(coords):
             if i != j: # Any city traveling to itself should have a distance of 0, for example city 0 -> city 0 results in cost of 0
                 matrix[i][j] = euclidean_distance(coords[i], coords[j]) # Calculate the euclidean distance for each city pair, and use them to populate the distance matrix
     return matrix
+
+#This calculates total distance for the simulated annealing function
+def calc_total_distance(pathTotVal, distTotMatrix): 
+    
+    sumTotDist = 0
+    
+    for numValTot in range(len(pathTotVal)-1): 
+        
+        sumTotDist += distTotMatrix[pathTotVal[i]][pathTotVal[i+1]]
+        
+    sumTotDist += distTotMatrix[pathTotVal[-1]][pathTotVal[0]]
+    
+    return sumTotDist
 
 def reduce_matrix(distance_matrix):
     """
@@ -621,6 +644,58 @@ def ant_colony_tsp(coords):
     
     return bestPathVal, bestDistVal
 
+def simulatedAnnealing(coords): 
+    
+    #Have to create the initial Matrix
+    annealMatrix = generate_distance_matrix(coords)
+    
+    numberOfCities = len(coords) 
+    
+    #initialize cooling factor
+    coolingFactor = 0.95
+    
+    #Create random path to start with 
+    
+    annealCurPath = list(range(numberOfCities)
+    
+    shuffle(annealCurPath)
+    
+    #Set initial temp very high
+    
+    annealTemp = 10000
+    
+    #set the initial best to the randomly generated set. (Calculate initial energy)
+    
+    bestAnnealPath = annealCurPath
+    bestAnnealEnergy = calc_total_distance(annealCurPath, annealMatrix)
+    
+    for annealIterate in range(10000): 
+        
+        #generate new candidate solution
+        
+        newPathVal = annealCurPath.copy()
+        
+        shuffle(newPathVal)
+        
+        curEnergyVal = calc_total_distance(annealCurPath, annealMatrix)
+        
+        newEnergyVal =  calc_total_distance(newPathVal, annealMatrix)
+        
+        if newEnergyVal < curEnergyVal or uniform(0, 1) < exp((curEnergyVal - newEnergyVal)/annealTemp): 
+            
+            annealCurPath = newPathVal
+            curEnergyVal = newEnergyVal
+            
+        if curEnergyVal < bestAnnealEnergy: 
+            
+            bestAnnealPath = annealCurPath
+            bestAnnealEnergy = curEnergyVal
+            
+        annealTemp = annealTemp * coolingFactor
+        #change the max temp
+        
+    return bestAnnealPath, bestAnnealEnergy
+
 def run_algorithm(algorithm, coords):
     if algorithm == 'brute_force':
         return brute_force_tsp(coords)
@@ -636,12 +711,14 @@ def run_algorithm(algorithm, coords):
         return christofides_tsp(coords)
     elif algorithm == 'ant_colony':
         return ant_colony_tsp(coords)
+    elif algorithm == 'simulated_annealing':
+        return simulatedAnnealing(coords)
 
 def main():
     # Argument parsing
     parser = argparse.ArgumentParser(description='Solve TSP problem using different algorithms.')
     parser.add_argument('dataset', type=str, help='TSP dataset file path.')
-    parser.add_argument('algorithm', type=str, choices=['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp', 'two_opt', 'christofides', 'ant_colony'], help='Algorithm to use.')
+    parser.add_argument('algorithm', type=str, choices=['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp', 'two_opt', 'christofides', 'ant_colony', 'simulated_annealing'], help='Algorithm to use.')
     parser.add_argument('--timeout', type=int, default=60, help='Timeout for the algorithm in seconds.')
     args = parser.parse_args()
 
