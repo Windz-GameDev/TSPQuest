@@ -38,6 +38,7 @@
         4. https://nathanrooy.github.io/posts/2020-05-14/simulated-annealing-with-python/ 
         5. https://towardsdatascience.com/optimization-techniques-simulated-annealing-d6a4785a1de7
         6. https://www.baeldung.com/cs/simulated-annealing 
+        7. https://www.youtube.com/watch?v=35fzyblVdmA
     Datasets - http://www.math.uwaterloo.ca/tsp/world/countries.html
 '''
 
