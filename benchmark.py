@@ -216,6 +216,7 @@ def distTotal (route, coordins):
 def mstMinKey (coords, mstKeyVal, mstMinSetVals):
     
     mstMinVal = sys.maxsize
+    mstMinIndexNum = -1
     
     for kObj in range(len(coords)): 
         
@@ -454,7 +455,7 @@ def two_opt_tsp(coords):
         
         for oneSwap in range(1, len(currentRoute)-2): 
             
-            for endSwap in range(range(oneSwap+1, len(currentRoute))): 
+            for endSwap in range(oneSwap+1, len(currentRoute)): 
                 
                 routeNew = swapTwo(currentRoute, oneSwap, endSwap)
                 distanceNew = distTotal (routeNew, coords)
@@ -484,6 +485,8 @@ def christofides_tsp(coords):
     christofidesGraph = christofidesMatrix
     
     christofidesGraph[0][0] = 0
+    
+    oddDegrees = []
     
     '''
         
@@ -535,7 +538,7 @@ def christofides_tsp(coords):
         
         if nxGraph.degree(oddVert) % 2 != 0: 
             
-            oddDegrees.append[oddVert]
+            oddDegrees.append(oddVert)
             
     #Above loop gets odd degree vertices and puts them in a loop.
     
@@ -555,7 +558,17 @@ def christofides_tsp(coords):
         oddDegreeGraph[s][t]['weight'] *= -1
         
     
-    multiGraphGraph = compose(nxGraph, minWeightGraph)
+    matchingGraph = Graph()
+    matchingGraph.add_edges_from(minWeightGraph)
+    multiGraphGraph = compose(nxGraph, matchingGraph)
+    
+    if not is_connected(multiGraphGraph):
+        raise NetworkXError("Graph is not connected.")
+
+    odd_degree_nodes = [node for node in multiGraphGraph.nodes() if multiGraphGraph.degree(node) % 2 != 0]
+
+    if len(odd_degree_nodes) != 2:
+        raise NetworkXError("Graph does not have exactly two vertices with odd degrees.")
     
     chEulerianCircuit = list(eulerian_circuit(multiGraphGraph))
     
@@ -657,7 +670,7 @@ def simulatedAnnealing(coords):
     
     #Create random path to start with 
     
-    annealCurPath = list(range(numberOfCities)
+    annealCurPath = list(range(numberOfCities))
     
     shuffle(annealCurPath)
     
