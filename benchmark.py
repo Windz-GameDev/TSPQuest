@@ -59,6 +59,7 @@ from itertools import permutations
 from func_timeout import func_timeout, FunctionTimedOut
 from copy import deepcopy
 from networkx import *
+from networkx.algorithms import approximation
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import *
 
@@ -470,15 +471,30 @@ def two_opt_tsp(coords):
     
     return currentRoute, currentDist
 
-def christofides_tsp(coords): 
+def christofides_tsp2(coords):
     '''
-    This function implements the Christofides algorithm for the Traveling Salesman Problem (TSP).
-    It takes as input a list of coordinates and returns a tour and its total weight.
+        This function implements the Christofides algorithm for the Traveling Salesman Problem (TSP).
+        It takes as input a list of coordinates and returns a tour and its total weight.
     '''
 
     # Generate the distance matrix for the given coordinates
     christofidesMatrix = generate_distance_matrix(coords)
     
+    # Check symmetry
+    for i in range(len(christofidesMatrix)):
+        for j in range(len(christofidesMatrix)):
+            if christofidesMatrix[i][j] != christofidesMatrix[j][i]:
+                print("The distances are not symmetric.")
+                break
+
+    # Check triangle inequality
+    for i in range(len(christofidesMatrix)):
+        for j in range(len(christofidesMatrix)):
+            for k in range(len(christofidesMatrix)):
+                if christofidesMatrix[i][k] > christofidesMatrix[i][j] + christofidesMatrix[j][k]:
+                    print("The distances do not obey the triangle inequality.")
+                    break
+
     # Initialize a new NetworkX graph
     nxGraph = Graph()
     nxGraph.add_nodes_from(range(len(coords)))
@@ -493,60 +509,108 @@ def christofides_tsp(coords):
 
     # Add weights to the edges of the MST
     for edge in mst.edges():
-        node1, node2 = edge
+        node1, node2 = sorted(edge)
         mst[node1][node2]['weight'] = christofidesMatrix[node1][node2]
 
-    # Find the vertices with odd degree in the MST
-    oddDegrees = []
-    for oddVert in mst.nodes(): 
-        if mst.degree(oddVert) % 2 != 0: 
-            oddDegrees.append(oddVert)
+    # Find the approximate shortest path using Christofides algorithm through the networkx library
+    shortest_path = approximation.christofides(nxGraph, weight='weight', tree=mst)
+    print(shortest_path)
+    
+    # Calculate the total distance of the tour
+    total_distance = 0
+    for city in range(len(shortest_path) - 1): 
+        print(f"Adding {city} to {city + 1}")
+        total_distance += christofidesMatrix[shortest_path[city]][shortest_path[city + 1]]
+    total_distance += christofidesMatrix[shortest_path[-1]][shortest_path[0]]
 
-    # Create a graph with the odd degree vertices and add edges between them
-    oddDegreeGraph = Graph()
-    oddDegreeGraph.add_nodes_from(oddDegrees)
-    for i in range(len(oddDegrees)):
-        for j in range(i + 1, len(oddDegrees)):
-            oddDegreeGraph.add_edge(oddDegrees[i], oddDegrees[j], weight=christofidesMatrix[oddDegrees[i]][oddDegrees[j]])
+    return shortest_path, total_distance
 
-    # Find the minimum weight perfect matching in the graph of odd degree vertices
-    minWeightGraph = max_weight_matching(oddDegreeGraph, maxcardinality = True)
 
-    # Create a new graph for the minimum weight perfect matching
-    matchingGraph = Graph()
-    for edge in minWeightGraph:
-        node1, node2 = edge
-        matchingGraph.add_edge(node1, node2, weight=christofidesMatrix[node1][node2])
+def christofides_tsp(coords):
+    # Generate the distance matrix for the given coordinates
+    christofidesMatrix = generate_distance_matrix(coords)
+    
+    # Check symmetry
+    for i in range(len(christofidesMatrix)):
+        for j in range(len(christofidesMatrix)):
+            if christofidesMatrix[i][j] != christofidesMatrix[j][i]:
+                print("The distances are not symmetric.")
+                break
 
-    # Combine the MST and the minimum weight perfect matching to create an Eulerian graph
-    multiGraphGraph = compose(mst, matchingGraph)
+    # Check triangle inequality
+    for i in range(len(christofidesMatrix)):
+        for j in range(len(christofidesMatrix)):
+            for k in range(len(christofidesMatrix)):
+                if christofidesMatrix[i][k] > christofidesMatrix[i][j] + christofidesMatrix[j][k]:
+                    print("The distances do not obey the triangle inequality.")
+                    break
+
+    # Initialize a new NetworkX graph
+    nxGraph = networkx.Graph()
+    nxGraph.add_nodes_from(range(len(coords)))
+
+    # Add all the edges to the graph, with their weights set to the corresponding distances in christofidesMatrix
+    for nxItemOne in range(len(coords)): 
+        for nxItemTwo in range(nxItemOne + 1, len(coords)):    
+            nxGraph.add_edge(nxItemOne, nxItemTwo, weight=christofidesMatrix[nxItemOne][nxItemTwo])
+
+    # Compute the Minimum Spanning Tree (MST) of the graph
+    mst = networkx.minimum_spanning_tree(nxGraph)
+
+    # Add weights to the edges of the MST
+    for edge in mst.edges():
+        node1, node2 = sorted(edge)
+        mst[node1][node2]['weight'] = christofidesMatrix[node1][node2]
+
+    minWeightGraph = nxGraph.copy()
+    minWeightGraph.remove_nodes_from([v for v, degree in mst.degree() if not (degree % 2)])
+    edges = networkx.algorithms.min_weight_matching(minWeightGraph)
+
+
+    multiGraphGraph = networkx.MultiGraph()
+    multiGraphGraph.add_edges_from(mst.edges(data=True))
+    multiGraphGraph.add_edges_from(edges)
 
     # Check if the graph is connected
-    if not is_connected(multiGraphGraph):
-        raise NetworkXError("Graph is not connected.")
+    if not networkx.is_connected(multiGraphGraph):
+        raise networkx.NetworkXError("Graph is not connected.")
 
     # Check if the graph is Eulerian
-    if not is_eulerian(multiGraphGraph):
-        raise NetworkXError("Graph is not Eulerian.")
+    if not networkx.is_eulerian(multiGraphGraph):
+        raise networkx.NetworkXError("Graph is not Eulerian.")
 
     # Find an Eulerian circuit in the graph
-    chEulerianCircuit = list(eulerian_circuit(multiGraphGraph))
-
-    # Calculate the total weight of the tour and create a list of visited cities
-    finalWeightChristofides = 0
-    currentRouteCh = []
+    chEulerianCircuit = list(networkx.eulerian_circuit(multiGraphGraph))
+   
+    # Initialize a list to store the TSP tour
+    found_path = []
     visited = set()
-    starting_vertex = chEulerianCircuit[0][0]
-    currentRouteCh.append(starting_vertex)
-    for finalEdges in chEulerianCircuit: 
-        _, end = finalEdges
-        if end not in visited: 
-            currentRouteCh.append(end)
+
+    # Iterate through the Eulerian circuit
+    for edge in chEulerianCircuit:
+        start, end = edge
+
+        # Add the starting node to the tour if it hasn't been visited
+        if start not in visited:
+            found_path.append(start)
+            visited.add(start)
+
+        # Add the ending node to the tour if it hasn't been visited
+        if end not in visited:
+            found_path.append(end)
             visited.add(end)
-        finalWeightChristofides += multiGraphGraph[finalEdges[0]][finalEdges[1]]['weight']
+
+    # Add the starting node to close the TSP tour
+    found_path.append(found_path[0])
+
+    # Calculate the total distance of the tour
+    total_distance = 0
+    for i in range(len(found_path) - 1):
+        print(f"Added {i} to {i + 1}")
+        total_distance += christofidesMatrix[found_path[i]][found_path[i + 1]]
     
     # Return the tour and its total weight
-    return currentRouteCh, finalWeightChristofides
+    return found_path, total_distance
 
 
 def ant_colony_tsp(coords): 
@@ -615,7 +679,7 @@ def ant_colony_tsp(coords):
     bestDistVal = pathLenVals[bestPathIndVal]
     
     return bestPathVal, bestDistVal
-
+    
 def simulatedAnnealing(coords): 
     
     #Have to create the initial Matrix
