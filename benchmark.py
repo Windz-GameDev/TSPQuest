@@ -19,13 +19,14 @@
     Dynamic Programming - https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/
     2-Opt - https://www.keiruaprod.fr/blog/2021/09/15/traveling-salesman-with-2-opt.html
     Christofides - 
-        Prim's algorithm portion of Christofides - https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/
+        CHANGED AND USED DIFFERENT METHOD FOR MST - Prim's algorithm portion of Christofides - https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/
         Other aspects of Christofides - 
             https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.operators.binary.compose.html
             http://matejgazda.com/christofides-algorithm-in-python/
             https://www.youtube.com/watch?v=Uu2ptesvteE
             https://notebook.community/DhashS/Olin-Complexity-Final-Project/code/03_approximation_algorithms
             https://networkx.org/documentation/stable/reference/convert.html
+            https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.approximation.traveling_salesman.christofides.html#christofides
     Greedy - https://www.geeksforgeeks.org/travelling-salesman-problem-greedy-approach/
     Ant Colony - 
         1. https://induraj2020.medium.com/implementation-of-ant-colony-optimization-using-python-solve-traveling-salesman-problem-9c14d3114475#:~:text=Implementing%20Ant%20colony%20optimization%20in%20python%2D%20solving%20Traveling%20salesman%20problem,-Induraj&text=Ant%20colony%20optimization%20(ACO)%20is,by%20the%20behavior%20of%20ants.
@@ -59,6 +60,7 @@ from itertools import permutations
 from func_timeout import func_timeout, FunctionTimedOut
 from copy import deepcopy
 from networkx import *
+from networkx.algorithms import approximation
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import *
 
@@ -74,7 +76,11 @@ def plot_path(coords, path, algorithm, total_distance, time):
     # Plot the path taken
     for i in range(len(path) - 1): # Stop at one less than the final city because final city will try to connect to a city out of bounds
         plt.plot((coords[path[i]][0], coords[path[i+1]][0]), (coords[path[i]][1], coords[path[i+1]][1]), 'r-') # First argument is a tuple containing the x coordinates of the first and second city, the second tuple is for the y coordinates respectively
-    plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path
+    # plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path incase the first city was not appended to the end of the path list
+
+    # Label the starting node as "Start"
+    start_x, start_y = coords[path[0]]
+    plt.text(start_x, start_y, 'Start', fontsize=10, ha='right', weight='bold')
 
     # Add title
     plt.title(f"{algorithm.replace('_', ' ').title()} - Cities: {len(coords)} - Distance (Euclidean): {round(total_distance, 4)} - Time (Seconds): {time}")
@@ -86,18 +92,19 @@ def plot_path(coords, path, algorithm, total_distance, time):
     # Show the plot
     plt.show()
 
-def generate_distance_matrix(coords):
+def generate_distance_matrix(coords, self_distance = 0):
     num_cities = len(coords)
     '''
     Generate a euclidean distance matrix for a list of coordinate tuples.
 
-    The distance for every city to itself should be infinity to avoid an algorithm considering loops which return to the same city.
+    The self distance for every city to itself should be infinity for Branch and Bound to avoid an algorithm considering loops which return to the same city.
+    However, it is 0 by default for other algorithms.
 
     The inner loop creates a row equal in length to the number of cities, and the router loop causes this loop
     to execute a number of times equal to the number of cities. This results in a matrix with an equal number of 
     rows and columns.
     '''
-    matrix = [[float('inf') for city in range(num_cities)] for city in range(num_cities)] 
+    matrix = [[self_distance for city in range(num_cities)] for city in range(num_cities)] 
      # Calculate the distance for each city i to every other city
     for i in range(num_cities):
         for j in range(num_cities): 
@@ -242,12 +249,13 @@ def brute_force_tsp(coords): # Coords represents a list of tuples, the 0th eleme
             We pass in two coordinate tuples from the coordinates list, accessing them using the path indices of the current location and the next in the path'''
             current_distance += euclidean_distance(coords[current_path[i]], coords[current_path[i+1]]) 
         current_distance += euclidean_distance(coords[current_path[-1]], coords[current_path[0]]) # Now, we connect the final location in the path to the starting position to complete the cycle
-        
+ 
         # Update min_distance and best_path
         if current_distance < min_distance: # If the current path distance just calculated is less than the stored minimum we've found so far, we have a new minimum and best path
             min_distance = current_distance # Assign the new minimum euclidean distance to minimum distance
-            best_path = current_path # Assign the new best path permutation to best path, the indices representing the coordinates locations in the coords list of tuples 
+            best_path = list(current_path) # Assign a list copy of the new best path permutation tuple to best path, the indices representing the coordinates locations in the coords list of tuples 
     
+    best_path.append(best_path[0]) # Make the first element of the best path the last element as well to complete the hamiltonian cycle
     return best_path, min_distance # Return the optimal answer to the TSP problem 
 
 # Greedy algorithm for solving TSP
@@ -285,13 +293,14 @@ def nearest_neighbor_tsp(coords):
         cities_left_to_visit.remove(current_city) # Our current city has been visited so we should not travel to it again according to the definition of the TSP problem
     
     found_distance += euclidean_distance(coords[current_city], coords[found_path[0]]) # Now that every city has been visited, we must return from the last city back to the start to complete the hamiltonian cycle
+    found_path.append(found_path[0])
     return found_path, found_distance # Now that we have the path and total distance, we must return them so we can visualize the results
 
 # Branch and Bound algorithm for solving the TSP
 def branch_and_bound_tsp(coords):
     
     # Generate the distance matrix from the list of coordinate tuples
-    distance_matrix = generate_distance_matrix(coords)
+    distance_matrix = generate_distance_matrix(coords, float('inf'))
 
     # Define a node class for our state based tree which will store a node's path, it's reduced matrix, and its cost
     class Node:
@@ -320,9 +329,10 @@ def branch_and_bound_tsp(coords):
     while priority_queue:
         current_node = heapq.heappop(priority_queue)
         if (current_node.is_complete_tour):
-            if (current_node.cost < upper_bound):
-                upper_bound = current_node.cost + euclidean_distance(coords[current_node.path[-1]], coords[current_node.path[0]]) # Only update upper if leaf node is reached and a better solution is found
-                best_path = current_node.path + [0] # Add the starting city to complete the tour
+            complete_tour_cost = current_node.cost + euclidean_distance(coords[current_node.path[-1]], coords[current_node.path[0]]) # Get total cost of the tour, including from the last node to the first node
+            if (complete_tour_cost < upper_bound): # If total cost of the tour is less than the upperbound, update upperbound
+                upper_bound = complete_tour_cost
+                best_path = current_node.path + [0] # Add the starting city to complete the new best path
                 continue
 
         for unvisited in current_node.unvisited: 
@@ -357,43 +367,142 @@ def branch_and_bound_tsp(coords):
 
     return best_path, upper_bound # Return the best path and minimum cost 
 
-def held_karp_tsp(coords):
-    n = len(coords)
-    distances = [[euclidean_distance(coords[i], coords[j]) for j in range(n)] for i in range(n)]
-    memo = {}
+# Dynamic programming algorithm for solving the TSP 
+def held_karp_tsp(coords):    
+    def recursion(currently_visited, city):
+        # Base case, reached end city in the path, calculate the distance from the final node, to the starting node
+        if(currently_visited == all_cities_visited):
+            # Cost of the city to an empty unvisited subset is the distance from the city to the starting city 
+            memo[city][currently_visited] = (distance_matrix[city][0], 0);
+            return memo[city][currently_visited][0] # Return cost stored in the memo table
 
-    def hk_recursive(S, j):
-        if S == (1 << j):
-            return distances[0][j]
-        if (S, j) in memo:
-            return memo[(S, j)]
+        # The min cost from this city to the next optimal city in this subset of unvisited cities have already been calculated, return it from the memoization table 
+        if (memo[city][currently_visited][0] != float('inf')):
+            return memo[city][currently_visited][0] 
 
-        costs = [
-            hk_recursive(S & ~(1 << j), k) + distances[k][j]
-            for k in range(1, n) if S & (1 << k) and k != j
-        ]
+        # For each point in the path start, with a min cost of infinity, update everytime you find a next city that leads to a shorter cost
+        min_cost = float('inf')
+        min_city = None
+
+        # Check for unvisited cities
+        for next_city in range(num_cities):
+            '''
+                1 << next_city will create a binary number with only the bit representing the integer index value held by next_city, set to 1
+                
+                currently_visited & (i << next_city) performs a bitwise AND between the currently visited bit_mask and 
+                the binary number with only the next city's index set to one
+
+                The above bitwise AND operation creates a new binary number, where there can only be one bit set 
+                to one. That is if the number held by next_city's bit that was set to one in 1 << next_city is also set to one in currently_visited, 
+                which means that city already been visited. Here is a visual example:
+
+                
+                00101 = currently visited
+                00001 = 1 << next_city where next_city = 0
+
+                00101 & 00001 = 000001
+                Since 000001 != 0, it's 1, we know the 0th city by has been visited.
+
+                Take the counter example
+
+                00101 = currently visited
+                00010 = 1 << next_city where next_city = 1
+
+                00101 & 00010 = 00000,
+                Since 00000 == 0, we know that the 1st city has not visited, so we should explore it. 
+
+
+                In short, if the binary number as a result of the bitwise AND
+                is 0, the number held by next_city's bit in the currently_visited bitmask is 0, and the current next city
+                in num_cities has not been visited yet, meaning we should explore it. 
+            '''
+            if ((currently_visited & (1 << next_city)) == 0):
+                '''
+                    Get the cost of this city to the next unvisited one, and the cost of the rest of the optimal decisions down this path
+
+                    When we are passing the new bit mask represent the new visited cities for the next city. We simply set the bit at 
+                    index next_city to 1 by using a bitwise OR operation. A bit wise OR operation traverses each bit in both binary numbers,
+                    and if either bit in a position is one, the resulting binary number is set to 1 for that bit position. 
+
+                    See the below example:
+
+                    00101 = currently visited
+                    00010 = 1 << next_city where next_city = 1
+
+                    00101 OR 00010 = 00111
+
+                    The binary 00111 binary number means that the 0th, 1st, and 2nd city have all been visited. This is important for making sure a city does 
+                    not revisit itself.  
+
+                    next_city is merely a city's coordinate index in the coordinate list of tuples
+                '''
+                next_city_cost = distance_matrix[city][next_city] + recursion(currently_visited | (1 << next_city), next_city)
+                
+                # Cost for taking this city next from the previous city is less than the currently found minimum cost, so update it
+                if (next_city_cost < min_cost):
+                    min_cost = next_city_cost
+                    min_city = next_city
+                    # Store the min cost so far from this city to every city in the set of currently unvisited cities, as well as the next optimal city
+
+        # No more unvisited cities, we have the minimum cost for this city to this subset so we return it up to the next level
+        memo[city][currently_visited] = (min_cost, min_city)
+        return memo[city][currently_visited][0]
+    def reconstruct_path():
+        # Bitmask where first city (0) is visited and all others are unvisited
+        currently_visited = 1 << 0
         
-        if costs:
-            memo[(S, j)] = min(costs)
-        else:
-            memo[(S, j)] = float('inf')  # No valid cost, set to infinity
+        best_path = [0] # We always start from city 0
+        next_city = 0 # Initialize with starting city
         
-        return memo[(S, j)]
+        # While not all cities have been visited, or the bit mask does not have all bits set to 1 for each city
+        while currently_visited != (1 << num_cities) - 1:
+            min_cost, next_city = memo[best_path[-1]][currently_visited]
+            
+            # For troubleshooting
+            if next_city is None: 
+                raise ValueError(f'No next city found for city {best_path[-1]} and visited cities {currently_visited}')
+            
+            # Add the next optimal city to the best path that we just found from the memo table
+            best_path.append(next_city)
+            
+            # Mark the next city as visited in the bit mask
+            currently_visited = currently_visited | (1 << next_city) # 0 or 1 is always 1
+        
+        # Add the starting city to complete the hamiltonian cycle
+        best_path.append(0)
+        return best_path
 
-    min_cost = min(hk_recursive((1 << n) - 2, j) + distances[j][0] for j in range(1, n))
-    
-    # Reconstructing the path
-    S, j, path = (1 << n) - 2, 0, [0]
-    for _ in range(n-1):
-        j = min(
-            ((k, distances[j][k] + hk_recursive(S & ~(1 << k), k))
-             for k in range(1, n) if S & (1 << k)),
-            key=lambda x: x[1]
-        )[0]
-        S &= ~(1 << j)
-        path.append(j)
-    
-    return path, min_cost
+
+    num_cities = len(coords)
+    distance_matrix = generate_distance_matrix(coords, 0)
+    ''' 
+        Create a 2D list with 2^n columns and n rows where n represents the number of ciites.
+        Each row corresponds to a city, and each column corresponds to a subset of cities.
+
+        Each cell contains a tuple holding the minimum cost to visit all cities in a subset, 
+        and the next city in the optimal path which is necessary for back tracking.
+
+        Ex: 
+            
+        memo[i][j] represents the minimum cost to travel from a city i, to visit all cities
+        in a subset j.
+
+    '''
+    memo = [[(float('inf'), None) for _ in range(1 << num_cities)] for _ in range(num_cities)]
+    '''
+        A left shift operation that shifts the binary representation of the number 1 to the left by num_cities places,.
+        creating a binary number with a number of bits equal to the number of cities + 1, where each bit except 
+        the first is set to 0 except the last. If there five cities, this would produce 100000. Which is equal to 2^5 or 32 in binary. 
+        Then, it subtracts 1 from this binary number to give us 11111 to give us a binary number with a number of bits equal to the
+        number of cities, or 31. 
+        
+    '''
+    all_cities_visited = (1 << num_cities) - 1 
+    track_visited_cities = 1 << 0 # Create a binary number holding 1, this represents our starting point in the algorithm, the 0th city
+    final_cost = recursion(track_visited_cities, 0)
+    final_path = reconstruct_path()
+
+    return final_path, final_cost
 
 #two-opt function
 def two_opt_tsp(coords): 
@@ -469,131 +578,150 @@ def two_opt_tsp(coords):
     
     return currentRoute, currentDist
 
-def christofides_tsp(coords): 
-    
+def christofides_tsp2(coords):
     '''
+        This function implements the Christofides algorithm for the Traveling Salesman Problem (TSP).
+        It takes as input a list of coordinates and returns a tour and its total weight.
         
-        Christofides must first find MST from prims algorithm.
-        
+        THIS VERSION IS A REPLICATION OF THE ONLINE IN ORDER TO TEST MAIN CHRISTOFIDES FUNCTION IS THE ONE WE CREATED.
+        https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.approximation.traveling_salesman.christofides.html#christofides
+        https://networkx.org/documentation/stable/_modules/networkx/algorithms/approximation/traveling_salesman.html
     '''
-    
-    #This generates the distance matrix, using the function also used in branch and bound
+
+    # Generate the distance matrix for the given coordinates
     christofidesMatrix = generate_distance_matrix(coords)
     
-    christofidesGraph = [[0 for column in range(len(coords))] for row in range(len(coords))]
-    
-    christofidesGraph = christofidesMatrix
-    
-    christofidesGraph[0][0] = 0
-    
-    oddDegrees = []
-    
-    '''
-        
-        Three above lines intialize the graph that must be used for prims to work.
-        
-    '''
-    
-    christofKey = [sys.maxsize] * len(coords)
-    
-    christofParent = [None] * len(coords)
-    
-    mstMinSet = [False] * len(coords)
-    
-    christofParent[0] = -1
-    
-    for chTrCounter in range(len(coords)): 
-        
-        numDistanceVertex = mstMinKey(coords, christofKey, mstMinSet)
-        
-        mstMinSet[numDistanceVertex] = True
-        
-        for coordNumCount in range(len(coords)): 
-            
-            if christofidesGraph[chTrCounter][coordNumCount] > 0 and mstMinSet[coordNumCount] == False and christofKey[coordNumCount] > christofidesGraph[chTrCounter][coordNumCount]: 
-                
-                christofKey[coordNumCount] = christofidesGraph[chTrCounter][coordNumCount]
-                christofParent[coordNumCount] = chTrCounter
-                
-    '''
-        
-        END OF MST portion of Christofides
-        
-    '''
-    
+    # Check symmetry
+    for i in range(len(christofidesMatrix)):
+        for j in range(len(christofidesMatrix)):
+            if christofidesMatrix[i][j] != christofidesMatrix[j][i]:
+                print("The distances are not symmetric.")
+                break
+
+    # Check triangle inequality
+    for i in range(len(christofidesMatrix)):
+        for j in range(len(christofidesMatrix)):
+            for k in range(len(christofidesMatrix)):
+                if christofidesMatrix[i][k] > christofidesMatrix[i][j] + christofidesMatrix[j][k]:
+                    print("The distances do not obey the triangle inequality.")
+                    break
+
+    # Initialize a new NetworkX graph
     nxGraph = Graph()
-    
     nxGraph.add_nodes_from(range(len(coords)))
-    
+
+    # Add all the edges to the graph, with their weights set to the corresponding distances in christofidesMatrix
     for nxItemOne in range(len(coords)): 
-        
-        for nxItemTwo in range(len(coords)): 
-            
+        for nxItemTwo in range(nxItemOne + 1, len(coords)):    
             nxGraph.add_edge(nxItemOne, nxItemTwo, weight=christofidesMatrix[nxItemOne][nxItemTwo])
-            
-        
-    #Above 2 loops converts mst into networkx format.
+
+    # Compute the Minimum Spanning Tree (MST) of the graph
+    mst = networkx.minimum_spanning_tree(nxGraph)
+
+    # Add weights to the edges of the MST
+    for edge in mst.edges():
+        node1, node2 = sorted(edge)
+        mst[node1][node2]['weight'] = christofidesMatrix[node1][node2]
+
+    # Find the approximate shortest path using Christofides algorithm through the networkx library
+    shortest_path = approximation.christofides(nxGraph, weight='weight', tree=mst)
+    print(shortest_path)
     
-    for oddVert in nxGraph.nodes(): 
-        
-        if nxGraph.degree(oddVert) % 2 != 0: 
-            
-            oddDegrees.append(oddVert)
-            
-    #Above loop gets odd degree vertices and puts them in a loop.
+    # Calculate the total distance of the tour
+    total_distance = 0
+    for city in range(len(shortest_path) - 1): 
+        print(f"Adding {city} to {city + 1}")
+        total_distance += christofidesMatrix[shortest_path[city]][shortest_path[city + 1]]
+    total_distance += christofidesMatrix[shortest_path[-1]][shortest_path[0]]
+
+    return shortest_path, total_distance
+
+
+def christofides_tsp(coords):
+    # Generate the distance matrix for the given coordinates
+    christofidesMatrix = generate_distance_matrix(coords)
     
-    oddDegreeGraph = Graph()
-    
-    oddDegreeGraph.add_nodes_from(oddDegrees)
-    
-    for s, t in oddDegreeGraph.edges: 
-        
-        oddDegreeGraph[s][t]['weight'] *= -1
-        
-    
-    minWeightGraph = max_weight_matching(oddDegreeGraph, maxcardinality = True)
-    
-    for s, t in oddDegreeGraph.edges: 
-        
-        oddDegreeGraph[s][t]['weight'] *= -1
-        
-    
-    matchingGraph = Graph()
-    matchingGraph.add_edges_from(minWeightGraph)
-    multiGraphGraph = compose(nxGraph, matchingGraph)
-    
+    # Check symmetry
+    for i in range(len(christofidesMatrix)):
+        for j in range(len(christofidesMatrix)):
+            if christofidesMatrix[i][j] != christofidesMatrix[j][i]:
+                print("The distances are not symmetric.")
+                break
+
+    # Check triangle inequality
+    for i in range(len(christofidesMatrix)):
+        for j in range(len(christofidesMatrix)):
+            for k in range(len(christofidesMatrix)):
+                if christofidesMatrix[i][k] > christofidesMatrix[i][j] + christofidesMatrix[j][k]:
+                    print("The distances do not obey the triangle inequality.")
+                    break
+
+    # Initialize a new NetworkX graph
+    nxGraph = networkx.Graph()
+    nxGraph.add_nodes_from(range(len(coords)))
+
+    # Add all the edges to the graph, with their weights set to the corresponding distances in christofidesMatrix
+    for nxItemOne in range(len(coords)): 
+        for nxItemTwo in range(nxItemOne + 1, len(coords)):    
+            nxGraph.add_edge(nxItemOne, nxItemTwo, weight=christofidesMatrix[nxItemOne][nxItemTwo])
+
+    # Compute the Minimum Spanning Tree (MST) of the graph
+    mst = networkx.minimum_spanning_tree(nxGraph)
+
+    # Add weights to the edges of the MST
+    for edge in mst.edges():
+        node1, node2 = sorted(edge)
+        mst[node1][node2]['weight'] = christofidesMatrix[node1][node2]
+
+    minWeightGraph = nxGraph.copy()
+    minWeightGraph.remove_nodes_from([v for v, degree in mst.degree() if not (degree % 2)])
+    edges = networkx.algorithms.min_weight_matching(minWeightGraph)
+
+
+    multiGraphGraph = networkx.MultiGraph()
+    multiGraphGraph.add_edges_from(mst.edges(data=True))
+    multiGraphGraph.add_edges_from(edges)
+
+    # Check if the graph is connected
+    if not networkx.is_connected(multiGraphGraph):
+        raise networkx.NetworkXError("Graph is not connected.")
+
     # Check if the graph is Eulerian
-    if not is_eulerian(multiGraphGraph):
-        raise NetworkXError("Graph is not Eulerian.")
+    if not networkx.is_eulerian(multiGraphGraph):
+        raise networkx.NetworkXError("Graph is not Eulerian.")
 
-    odd_degree_nodes = [node for node in multiGraphGraph.nodes() if multiGraphGraph.degree(node) % 2 != 0]
+    # Find an Eulerian circuit in the graph
+    chEulerianCircuit = list(networkx.eulerian_circuit(multiGraphGraph))
+   
+    # Initialize a list to store the TSP tour
+    found_path = []
+    visited = set()
 
-    #if len(odd_degree_nodes) != 0:
-        #raise NetworkXError("Graph does not have exactly two vertices with odd degrees.")
+    # Iterate through the Eulerian circuit
+    for edge in chEulerianCircuit:
+        start, end = edge
+
+        # Add the starting node to the tour if it hasn't been visited
+        if start not in visited:
+            found_path.append(start)
+            visited.add(start)
+
+        # Add the ending node to the tour if it hasn't been visited
+        if end not in visited:
+            found_path.append(end)
+            visited.add(end)
+
+    # Add the starting node to close the TSP tour
+    found_path.append(found_path[0])
+
+    # Calculate the total distance of the tour
+    total_distance = 0
+    for i in range(len(found_path) - 1):
+        print(f"Added {i} to {i + 1}")
+        total_distance += christofidesMatrix[found_path[i]][found_path[i + 1]]
     
-    chEulerianCircuit = list(eulerian_circuit(multiGraphGraph))
-    
-    chSingleCircuit = []
-    
-    for CircEdge in chEulerianCircuit: 
-        
-        if CircEdge not in chSingleCircuit: 
-            
-            chSingleCircuit.append(CircEdge)
-            
-        
-    #Above is changing it so each only appears once.
-    
-    finalWeightChristofides = 0
-    currentRouteCh = []
-    
-    for finalEdges in chSingleCircuit: 
-        
-        finalWeightChristofides += multiGraphGraph[finalEdges[0]][finalEdges[1]]['weight']
-        
-        currentRouteCh.append((finalEdges[0], finalEdges[1]))
-        
-    return currentRouteCh, finalWeightChristofides
+    # Return the tour and its total weight
+    return found_path, total_distance
 
 def ant_colony_tsp(coords): 
     
