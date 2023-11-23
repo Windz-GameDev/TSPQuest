@@ -112,7 +112,7 @@ def calc_total_distance(pathTotVal, distTotMatrix):
     
     for numValTot in range(len(pathTotVal)-1): 
         
-        sumTotDist += distTotMatrix[pathTotVal[i]][pathTotVal[i+1]]
+        sumTotDist += distTotMatrix[pathTotVal[numValTot]][pathTotVal[numValTot+1]]
         
     sumTotDist += distTotMatrix[pathTotVal[-1]][pathTotVal[0]]
     
@@ -562,13 +562,14 @@ def christofides_tsp(coords):
     matchingGraph.add_edges_from(minWeightGraph)
     multiGraphGraph = compose(nxGraph, matchingGraph)
     
-    if not is_connected(multiGraphGraph):
-        raise NetworkXError("Graph is not connected.")
+    # Check if the graph is Eulerian
+    if not is_eulerian(multiGraphGraph):
+        raise NetworkXError("Graph is not Eulerian.")
 
     odd_degree_nodes = [node for node in multiGraphGraph.nodes() if multiGraphGraph.degree(node) % 2 != 0]
 
-    if len(odd_degree_nodes) != 2:
-        raise NetworkXError("Graph does not have exactly two vertices with odd degrees.")
+    #if len(odd_degree_nodes) != 0:
+        #raise NetworkXError("Graph does not have exactly two vertices with odd degrees.")
     
     chEulerianCircuit = list(eulerian_circuit(multiGraphGraph))
     
@@ -582,6 +583,9 @@ def christofides_tsp(coords):
             
         
     #Above is changing it so each only appears once.
+    
+    finalWeightChristofides = 0
+    currentRouteCh = []
     
     for finalEdges in chSingleCircuit: 
         
@@ -643,14 +647,14 @@ def ant_colony_tsp(coords):
             
             pathLenVals.append(totDistTrav)
             
-        pheromoneVals *= 0.9
+        pheremoneVals *= 0.9
         
         for path, distVal in zip(antCurPaths, pathLenVals): 
             
             for itemValues in range(len(path) - 1): 
                 
-                pheremoneVals[path[i]][path[i+1]] += 1/distVal
-                pheremoneVals[path[i+1]][path[i]] += 1/distVal
+                pheremoneVals[path[itemValues]][path[itemValues+1]] += 1/distVal
+                pheremoneVals[path[itemValues+1]][path[itemValues]] += 1/distVal
                 
     bestPathIndVal = argmin(pathLenVals)
     bestPathVal = antCurPaths[bestPathIndVal]
