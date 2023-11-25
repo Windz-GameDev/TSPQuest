@@ -77,7 +77,7 @@ def plot_path(coords, path, algorithm, total_distance, time):
     # Plot the path taken
     for i in range(len(path) - 1): # Stop at one less than the final city because final city will try to connect to a city out of bounds
         plt.plot((coords[path[i]][0], coords[path[i+1]][0]), (coords[path[i]][1], coords[path[i+1]][1]), 'r-') # First argument is a tuple containing the x coordinates of the first and second city, the second tuple is for the y coordinates respectively
-    # plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path incase the first city was not appended to the end of the path list
+    plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path incase the first city was not appended to the end of the path list
 
     # Label the starting node as "Start"
     start_x, start_y = coords[path[0]]
@@ -656,11 +656,45 @@ def christofides_tsp(coords):
     christofidesMatrix = generate_distance_matrix(coords)
     
     # Check symmetry
+    
+    triangleSymmetricTruth = False
+    
     for i in range(len(christofidesMatrix)):
+        
+        if triangleSymmetricTruth == True:
+            break
+        
         for j in range(len(christofidesMatrix)):
             if christofidesMatrix[i][j] != christofidesMatrix[j][i]:
-                print("The distances are not symmetric.")
+                triangleSymmetricTruth = True
                 break
+    
+    if triangleSymmetricTruth == True: 
+        
+        print("The distances are not symmetric.")
+
+    # Check triangle inequality
+    
+    triangleInequalityTruth = False
+    
+    for i in range(len(christofidesMatrix)):
+        
+        if triangleInequalityTruth == True: 
+            break
+        
+        for j in range(len(christofidesMatrix)):
+            
+            if triangleInequalityTruth == True: 
+                break
+            
+            for k in range(len(christofidesMatrix)):
+                if christofidesMatrix[i][k] > christofidesMatrix[i][j] + christofidesMatrix[j][k]:
+                    triangleInequalityTruth = True
+                    break
+                    
+    if triangleInequalityTruth == True: 
+        
+        print("The distances do not obey the triangle inequality.")
 
     # Initialize a new NetworkX graph
     nxGraph = networkx.Graph()
