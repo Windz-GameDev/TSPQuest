@@ -77,7 +77,7 @@ def plot_path(coords, path, algorithm, total_distance, time):
     # Plot the path taken
     for i in range(len(path) - 1): # Stop at one less than the final city because final city will try to connect to a city out of bounds
         plt.plot((coords[path[i]][0], coords[path[i+1]][0]), (coords[path[i]][1], coords[path[i+1]][1]), 'r-') # First argument is a tuple containing the x coordinates of the first and second city, the second tuple is for the y coordinates respectively
-    plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path incase the first city was not appended to the end of the path list
+    #plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path incase the first city was not appended to the end of the path list
 
     # Label the starting node as "Start"
     start_x, start_y = coords[path[0]]
@@ -577,6 +577,15 @@ def two_opt_tsp(coords):
                     
         twoOptImprovement = 1 - (currentDist/BeatDist)
     
+    if currentRoute[0] != 0: 
+        
+        currentRoute.insert(0, 0)
+        
+    if currentRoute[-1] != 0: 
+        
+        currentRoute.append(0)
+        
+    
     return currentRoute, currentDist
 
 def christofides_tsp2(coords):
@@ -761,6 +770,7 @@ def christofides_tsp(coords):
         total_distance += christofidesMatrix[found_path[i]][found_path[i + 1]]
     
     # Return the tour and its total weight
+    
     return found_path, total_distance
 
 def ant_colony_tsp(coords): 
@@ -769,7 +779,7 @@ def ant_colony_tsp(coords):
     
     antDistanceVals = generate_distance_matrix(coords)
     
-    bestPathVal = None
+    bestPathVal = []
     
     bestDistVal = float('inf')
     
@@ -788,13 +798,13 @@ def ant_colony_tsp(coords):
             
             curCityVal = random.randint(len(coords))
             
-            visitCityList = [curCityVal]
+            visitCityList = [0, curCityVal]
             
             totDistTrav = 0
             #3 lines above intialize each ant's travels
             
             #This loop runs until all cities are visited
-            while len(visitCityList) < len(coords): 
+            while len(set(visitCityList)) < len(coords): 
                 
                 notVisitedCityList = [place for place in range(len(coords)) if place not in visitCityList] #This line makes a list of the cities that have not been visited yet.
                 
@@ -809,7 +819,7 @@ def ant_colony_tsp(coords):
                 curCityVal = nearCityVal
                 
             #return to start
-            totDistTrav = antDistanceVals[curCityVal][visitCityList[0]]
+            totDistTrav += antDistanceVals[curCityVal][visitCityList[0]]
             
             antCurPaths.append(visitCityList)
             
@@ -828,6 +838,15 @@ def ant_colony_tsp(coords):
     bestPathVal = antCurPaths[bestPathIndVal]
     bestDistVal = pathLenVals[bestPathIndVal]
     
+    if bestPathVal[0] != 0: 
+        
+        bestPathVal.insert(0, 0)
+        
+    if bestPathVal[-1] != 0: 
+        
+        bestPathVal.append(0)
+        
+    
     return bestPathVal, bestDistVal
 
 def simulatedAnnealing(coords): 
@@ -842,9 +861,11 @@ def simulatedAnnealing(coords):
     
     #Create random path to start with 
     
-    annealCurPath = list(range(numberOfCities))
+    annealCurPath = list(range(1, numberOfCities))
     
     shuffle(annealCurPath)
+    
+    annealCurPath = [0] + annealCurPath + [0]
     
     #Set initial temp very high
     
@@ -859,9 +880,11 @@ def simulatedAnnealing(coords):
         
         #generate new candidate solution
         
-        newPathVal = annealCurPath.copy()
+        restOfPath = annealCurPath[1:-1].copy()
         
-        shuffle(newPathVal)
+        shuffle(restOfPath)
+        
+        newPathVal = [0] + restOfPath + [0]
         
         curEnergyVal = calc_total_distance(annealCurPath, annealMatrix)
         
@@ -879,7 +902,15 @@ def simulatedAnnealing(coords):
             
         annealTemp = annealTemp * coolingFactor
         #change the max temp
+    
+    if bestAnnealPath[0] != 0: 
         
+        bestAnnealPath.insert(0, 0)
+        
+    if bestAnnealPath[-1] != 0:
+        
+        bestAnnealPath.append(0)
+    
     return bestAnnealPath, bestAnnealEnergy
 
 def run_algorithm(algorithm, coords):
