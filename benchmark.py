@@ -16,6 +16,7 @@
     References: 
     BruteForce - https://www.geeksforgeeks.org/traveling-salesman-problem-tsp-implementation/
     Branch and Bound - https://www.youtube.com/watch?v=1FEP_sNb62k&t=515s
+                     - https://www.geeksforgeeks.org/traveling-salesman-problem-using-branch-and-bound-2/
     Dynamic Programming - https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/
     2-Opt - https://www.keiruaprod.fr/blog/2021/09/15/traveling-salesman-with-2-opt.html
     Christofides - 
@@ -598,13 +599,20 @@ def christofides_tsp2(coords):
                 print("The distances are not symmetric.")
                 break
 
+    triangleInequalityTruth = False
+
     # Check triangle inequality
     for i in range(len(christofidesMatrix)):
         for j in range(len(christofidesMatrix)):
             for k in range(len(christofidesMatrix)):
                 if christofidesMatrix[i][k] > christofidesMatrix[i][j] + christofidesMatrix[j][k]:
-                    print("The distances do not obey the triangle inequality.")
+                    triangleInequalityTruth = True
                     break
+                    
+    if triangleInequalityTruth == True: 
+        
+        print("The distances do not obey the triangle inequality.")
+        
 
     # Initialize a new NetworkX graph
     nxGraph = Graph()
@@ -637,6 +645,12 @@ def christofides_tsp2(coords):
     return shortest_path, total_distance
 
 
+"""
+
+CHRISTOFIDES TSP BELOW IS THE FUNCTION WE USED TO PROCESS CHRISTOFIDES
+
+"""
+
 def christofides_tsp(coords):
     # Generate the distance matrix for the given coordinates
     christofidesMatrix = generate_distance_matrix(coords)
@@ -647,14 +661,6 @@ def christofides_tsp(coords):
             if christofidesMatrix[i][j] != christofidesMatrix[j][i]:
                 print("The distances are not symmetric.")
                 break
-
-    # Check triangle inequality
-    for i in range(len(christofidesMatrix)):
-        for j in range(len(christofidesMatrix)):
-            for k in range(len(christofidesMatrix)):
-                if christofidesMatrix[i][k] > christofidesMatrix[i][j] + christofidesMatrix[j][k]:
-                    print("The distances do not obey the triangle inequality.")
-                    break
 
     # Initialize a new NetworkX graph
     nxGraph = networkx.Graph()
