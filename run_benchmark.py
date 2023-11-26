@@ -4,7 +4,7 @@ import csv
 import os
 
 # List of algorithms to run, be careful about changing this, adding unsupported algorithms may lead to unexpected results 
-algorithms = ['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp']
+algorithms = ['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp', 'two_opt', 'christofides', 'ant_colony', 'simulated_annealing']
 
 def main():
     # Setting up argument parsing

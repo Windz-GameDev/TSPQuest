@@ -4,26 +4,68 @@
     Algorithms for Brute Force, and Nearest Neighor were initially 
     referenced from GeeksForGeeks to ensure accurate implementation. Branch and bround is
     referenced from Abdul Bari's guide on youtube linked below. Dynamic Programming solution 
-    used multiple resources as a reference. Datasets are from The University of Waterloo.
+    used multiple resources as a reference. Datasets are either auto generated or sourced from
+    The University of Waterloo in Waterloo, Ontario, Canada
+    2-opt is referenced from KeiruaProd to ensure accurate implementation.
 
     References: 
-    BruteForce - https://www.geeksforgeeks.org/traveling-salesman-problem-tsp-implementation/
-    Branch and Bound - https://www.youtube.com/watch?v=1FEP_sNb62k&t=515s
-    Dynamic Programming - https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/, https://www.youtube.com/watch?v=Q4zHb-Swzro&t=0s, https://www.youtube.com/watch?v=JE0JE8ce1V0&t=705s
-    Greedy - https://www.geeksforgeeks.org/travelling-salesman-problem-greedy-approach/
+    BruteForce 
+      1. https://www.geeksforgeeks.org/traveling-salesman-problem-tsp-implementation/
+    Nearest Neighbor 
+      1. https://www.geeksforgeeks.org/travelling-salesman-problem-greedy-approach/
+    Branch and Bound 
+      1. https://www.youtube.com/watch?v=1FEP_sNb62k&t=515s
+      2. https://www.geeksforgeeks.org/traveling-salesman-problem-using-branch-and-bound-2/
+    Dynamic Programming 
+      1. https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/
+      2. https://www.youtube.com/watch?v=Q4zHb-Swzro&t=0s
+      3. https://www.youtube.com/watch?v=JE0JE8ce1V0&t=705s
+    2-Opt - 
+      1. https://www.keiruaprod.fr/blog/2021/09/15/traveling-salesman-with-2-opt.html
+    Christofides - 
+      1. https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/
+      2. https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.operators.binary.compose.html
+      3. http://matejgazda.com/christofides-algorithm-in-python/
+      4. https://www.youtube.com/watch?v=Uu2ptesvteE
+      5. https://notebook.community/DhashS/Olin-Complexity-Final-Project/code/03_approximation_algorithms
+      6. https://networkx.org/documentation/stable/reference/convert.html
+      7. https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.approximation.traveling_salesman.christofides.html#christofides
+    Ant Colony - 
+        1. https://induraj2020.medium.com/implementation-of-ant-colony-optimization-using-python-solve-traveling-salesman-problem-9c14d3114475#:~:text=Implementing%20Ant%20colony%20optimization%20in%20python%2D%20solving%20Traveling%20salesman%20problem,-Induraj&text=Ant%20colony%20optimization%20(ACO)%20is,by%20the%20behavior%20of%20ants.
+        2. https://github.com/Josephbakulikira/Traveling-Salesman-Algorithm/blob/master/antColony.py 
+        3. https://www.youtube.com/watch?v=EJKdmEbGre8
+    Simulated Annealing Sources - 
+        1. https://medium.com/swlh/how-to-implement-simulated-annealing-algorithm-in-python-ab196c2f56a0
+        2. https://machinelearningmastery.com/simulated-annealing-from-scratch-in-python/
+        3. https://github.com/perrygeo/simanneal/blob/master/simanneal/anneal.py 
+        4. https://nathanrooy.github.io/posts/2020-05-14/simulated-annealing-with-python/ 
+        5. https://towardsdatascience.com/optimization-techniques-simulated-annealing-d6a4785a1de7
+        6. https://www.baeldung.com/cs/simulated-annealing 
+        7. https://www.youtube.com/watch?v=35fzyblVdmA
     Datasets - http://www.math.uwaterloo.ca/tsp/world/countries.html
 '''
 
 # Import required libraries
+import sys
 import argparse
 import math
 import time 
 import matplotlib.pyplot as plt
 import os
 import heapq
+import networkx
+import random
+from math import *
+from random import *
+from numpy import *
 from itertools import permutations
 from func_timeout import func_timeout, FunctionTimedOut
 from copy import deepcopy
+from networkx import *
+from networkx.algorithms import approximation
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import *
+
 
 def plot_path(coords, path, algorithm, total_distance, time):
     
@@ -71,6 +113,19 @@ def generate_distance_matrix(coords, self_distance = 0):
             if i != j: # Any city traveling to itself should have a distance of 0, for example city 0 -> city 0 results in cost of 0
                 matrix[i][j] = euclidean_distance(coords[i], coords[j]) # Calculate the euclidean distance for each city pair, and use them to populate the distance matrix
     return matrix
+
+#This calculates total distance for the simulated annealing function
+def calc_total_distance(pathTotVal, distTotMatrix): 
+    
+    sumTotDist = 0
+    
+    for numValTot in range(len(pathTotVal)-1): 
+        
+        sumTotDist += distTotMatrix[pathTotVal[numValTot]][pathTotVal[numValTot+1]]
+        
+    sumTotDist += distTotMatrix[pathTotVal[-1]][pathTotVal[0]]
+    
+    return sumTotDist
 
 def reduce_matrix(distance_matrix):
     """
@@ -134,6 +189,53 @@ def read_tsp_file(file_content):
             reading_coords = True
     
     return coords
+
+'''
+    These 2 functions are used to allow 2-opt to function 
+'''
+def swapTwo (route, i, j): 
+    
+    #Check if i and j should be swapped and swap them
+    if j < i: 
+        
+        i, j = j, i
+        
+    return route[:i] + list(reversed(route[i:j+1])) + route[j+1:]
+
+def distTotal (route, coordins):
+    
+    distAmount = 0
+    
+    for item in range(len(route)): 
+        
+        if item > 0: 
+            
+            distAmount += math.sqrt(sum((coordins[route[item]][d] - coordins[route[item-1]][d])**2 for d in range(len(coordins[0]))))
+            
+        
+    return distAmount
+
+'''
+    
+    This mstMinKey function allows for one to find the vertex, that is not yet included, 
+    with the smallest distance value.
+    
+'''
+
+def mstMinKey (coords, mstKeyVal, mstMinSetVals):
+    
+    mstMinVal = sys.maxsize
+    mstMinIndexNum = -1
+    
+    for kObj in range(len(coords)): 
+        
+        if mstKeyVal[kObj] < mstMinVal and mstMinSetVals[kObj] == False:
+            
+            mstMinVal = mstKeyVal[kObj]
+            mstMinIndexNum = kObj
+            
+    return mstMinIndexNum
+    
 
 # Brute-force algorithm for solving the TSP
 def brute_force_tsp(coords): # Coords represents a list of tuples, the 0th element of any tupel represents the x element, and the 1st element of any tuple represents the y element
@@ -371,8 +473,8 @@ def held_karp_tsp(coords):
         # Add the starting city to complete the hamiltonian cycle
         best_path.append(0)
         return best_path
-
-
+    
+    
     num_cities = len(coords)
     distance_matrix = generate_distance_matrix(coords, 0)
     ''' 
@@ -403,6 +505,421 @@ def held_karp_tsp(coords):
     final_path = reconstruct_path()
 
     return final_path, final_cost
+      
+#two-opt function
+def two_opt_tsp(coords): 
+    
+    '''
+        Use nearest neighbor to find Initial route. Nearest Neighbor Code copied from code written by Aaron above.
+    '''
+    
+    twoOptImprovement = 1;
+    
+    num_cities = len(coords) # The number of coords tuples in the coords list gives us the number of cities the problem
+    cities_left_to_visit = set(range(num_cities)) # Keep track of the unvisted cities using a set of integers, each representing the index of a point in the coords list from 0 to len of num_cities - 1
+    found_path = [] # Initialize an empty list which will contain the path of city indexes for the coords list
+    current_city = 0  # Start from the first city
+    found_path.append(current_city) # Add first city to the found path so we can keep track of our starting point
+    cities_left_to_visit.remove(current_city) # First city has been visited so it should not be visited again until the very end of the algorithm to complete the hamiltonian cycle
+    found_distance = 0 # Keep track of the total distance of the found path, we start at 0 since we are still at the starting position
+    
+    # Visit nearest unvisited city
+    while cities_left_to_visit: # Not all cities have been visited yet so we keep constructing the path
+        '''
+            To find where we need to go from the current city, we need to look through all of the unvisited cities, and find the one the minimum euclidean distance
+            min returns to us the smallest item in an iterable, or the smallest of two or more arguments, in this case, our iterable is the unvisited set
+            The key argument is a function that is used to compute a key for each item in our iterable, essentially each city is given a distance key, iterable: 1 - key: 20 
+            The key is used to guide the min function in how to make the min comparison, the key for each iterable is the euclidean distance between the current city and that unvisited city
+            The min function will then find the item with the smallest key (distance) and return it to the variable nearest_city
+
+
+            The euclidean_distance function takes two coordinate tuples which are accessed using two indexes, 
+            both tuples represent a city's x, y coordinates in the TSP problem. The indexes are for the 
+            the current city, and the nearest city's tuple location in the coords list. 
+            When the function completes, it returns the euclidean distance between those cities.
+
+            Important Note: min will not consider cities that have been removed from the cities_left_to_visit set at the end of each iteration, meaning a city can't be traveled to twice
+
+        '''
+        nearest_city = min(cities_left_to_visit, key=lambda city: euclidean_distance(coords[current_city], coords[city])) 
+        found_distance += euclidean_distance(coords[current_city], coords[nearest_city]) # Since we are traveling to next city in the path, we have to add the distance to get there to total distance
+        current_city = nearest_city # Adjust our current location to the city we just traveled to
+        found_path.append(current_city) # Add the index of the current city to our found path so we know the path which provided our found distance at the end
+        cities_left_to_visit.remove(current_city) # Our current city has been visited so we should not travel to it again according to the definition of the TSP problem
+    
+    found_distance += euclidean_distance(coords[current_city], coords[found_path[0]])
+    
+    '''
+        
+        Two Opt Begins here. The initial route is the found route from nearest neighbor.
+        
+    '''
+    
+    currentRoute = found_path
+    currentDist = found_distance
+    
+    #Keep Looping while there is improvement
+    while twoOptImprovement > 0: 
+        
+        #Set the distance to beat as the current distance
+        BeatDist = currentDist
+        
+        for oneSwap in range(1, len(currentRoute)-2): 
+            
+            for endSwap in range(oneSwap+1, len(currentRoute)): 
+                
+                routeNew = swapTwo(currentRoute, oneSwap, endSwap)
+                distanceNew = distTotal (routeNew, coords)
+                
+                if distanceNew < BeatDist: 
+                    
+                    currentRoute = routeNew
+                    currentDist = distanceNew
+                    
+        twoOptImprovement = 1 - (currentDist/BeatDist)
+    
+    if currentRoute[0] != 0: 
+        
+        currentRoute.insert(0, 0)
+        
+    if currentRoute[-1] != 0: 
+        
+        currentRoute.append(0)
+        
+    
+    return currentRoute, currentDist
+
+def christofides_tsp2(coords):
+    '''
+        This function implements the Christofides algorithm for the Traveling Salesman Problem (TSP).
+        It takes as input a list of coordinates and returns a tour and its total weight.
+        
+        Dataset must form a metric space
+        
+        Utilizes networkx built in christofides function, other function 'çhristofides_tsp' does not
+          https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.approximation.traveling_salesman.christofides.html#christofides
+          https://networkx.org/documentation/stable/_modules/networkx/algorithms/approximation/traveling_salesman.html
+    '''
+
+    # Generate the distance matrix for the given coordinates
+    christofidesMatrix = generate_distance_matrix(coords)
+    
+    # Check symmetry
+    for i in range(len(christofidesMatrix)):
+        for j in range(len(christofidesMatrix)):
+            if christofidesMatrix[i][j] != christofidesMatrix[j][i]:
+                print("The distances are not symmetric.")
+                break
+
+    triangleInequalityTruth = False
+
+    # Check triangle inequality
+    for i in range(len(christofidesMatrix)):
+        for j in range(len(christofidesMatrix)):
+            for k in range(len(christofidesMatrix)):
+                if christofidesMatrix[i][k] > christofidesMatrix[i][j] + christofidesMatrix[j][k]:
+                    triangleInequalityTruth = True
+                    break
+                    
+    if triangleInequalityTruth == True: 
+        
+        print("The distances do not obey the triangle inequality.")
+        
+
+    # Initialize a new NetworkX graph
+    nxGraph = Graph()
+    nxGraph.add_nodes_from(range(len(coords)))
+
+    # Add all the edges to the graph, with their weights set to the corresponding distances in christofidesMatrix
+    for nxItemOne in range(len(coords)): 
+        for nxItemTwo in range(nxItemOne + 1, len(coords)):    
+            nxGraph.add_edge(nxItemOne, nxItemTwo, weight=christofidesMatrix[nxItemOne][nxItemTwo])
+
+    # Compute the Minimum Spanning Tree (MST) of the graph
+    mst = networkx.minimum_spanning_tree(nxGraph)
+
+    # Add weights to the edges of the MST
+    for edge in mst.edges():
+        node1, node2 = sorted(edge)
+        mst[node1][node2]['weight'] = christofidesMatrix[node1][node2]
+
+    # Find the approximate shortest path using Christofides algorithm through the networkx library
+    shortest_path = approximation.christofides(nxGraph, weight='weight', tree=mst)
+    print(shortest_path)
+    
+    # Calculate the total distance of the tour
+    total_distance = 0
+    for city in range(len(shortest_path) - 1): 
+        print(f"Adding {city} to {city + 1}")
+        total_distance += christofidesMatrix[shortest_path[city]][shortest_path[city + 1]]
+    total_distance += christofidesMatrix[shortest_path[-1]][shortest_path[0]]
+
+    return shortest_path, total_distance
+
+
+"""
+
+This function implements the Christofides algorithm for the Traveling Salesman Problem (TSP).
+It takes as input a list of coordinates and returns a tour and its total weight.
+
+Dataset must form a metric space
+
+Implemented without networkx built in function, used by default
+
+"""
+
+def christofides_tsp(coords):
+    # Generate the distance matrix for the given coordinates
+    christofidesMatrix = generate_distance_matrix(coords)
+    
+    # Check symmetry
+    
+    triangleSymmetricTruth = False
+    
+    for i in range(len(christofidesMatrix)):
+        
+        if triangleSymmetricTruth == True:
+            break
+        
+        for j in range(len(christofidesMatrix)):
+            if christofidesMatrix[i][j] != christofidesMatrix[j][i]:
+                triangleSymmetricTruth = True
+                break
+    
+    if triangleSymmetricTruth == True: 
+        
+        print("The distances are not symmetric.")
+
+    # Check triangle inequality
+    
+    triangleInequalityTruth = False
+    
+    for i in range(len(christofidesMatrix)):
+        
+        if triangleInequalityTruth == True: 
+            break
+        
+        for j in range(len(christofidesMatrix)):
+            
+            if triangleInequalityTruth == True: 
+                break
+            
+            for k in range(len(christofidesMatrix)):
+                if christofidesMatrix[i][k] > christofidesMatrix[i][j] + christofidesMatrix[j][k]:
+                    triangleInequalityTruth = True
+                    break
+                    
+    if triangleInequalityTruth == True: 
+        
+        print("The distances do not obey the triangle inequality.")
+
+    # Initialize a new NetworkX graph
+    nxGraph = networkx.Graph()
+    nxGraph.add_nodes_from(range(len(coords)))
+
+    # Add all the edges to the graph, with their weights set to the corresponding distances in christofidesMatrix
+    for nxItemOne in range(len(coords)): 
+        for nxItemTwo in range(nxItemOne + 1, len(coords)):    
+            nxGraph.add_edge(nxItemOne, nxItemTwo, weight=christofidesMatrix[nxItemOne][nxItemTwo])
+
+    # Compute the Minimum Spanning Tree (MST) of the graph
+    mst = networkx.minimum_spanning_tree(nxGraph)
+
+    # Add weights to the edges of the MST
+    for edge in mst.edges():
+        node1, node2 = sorted(edge)
+        mst[node1][node2]['weight'] = christofidesMatrix[node1][node2]
+
+    minWeightGraph = nxGraph.copy()
+    minWeightGraph.remove_nodes_from([v for v, degree in mst.degree() if not (degree % 2)])
+    edges = networkx.algorithms.min_weight_matching(minWeightGraph)
+
+
+    multiGraphGraph = networkx.MultiGraph()
+    multiGraphGraph.add_edges_from(mst.edges(data=True))
+    multiGraphGraph.add_edges_from(edges)
+
+    # Check if the graph is connected
+    if not networkx.is_connected(multiGraphGraph):
+        raise networkx.NetworkXError("Graph is not connected.")
+
+    # Check if the graph is Eulerian
+    if not networkx.is_eulerian(multiGraphGraph):
+        raise networkx.NetworkXError("Graph is not Eulerian.")
+
+    # Find an Eulerian circuit in the graph
+    chEulerianCircuit = list(networkx.eulerian_circuit(multiGraphGraph))
+   
+    # Initialize a list to store the TSP tour
+    found_path = []
+    visited = set()
+
+    # Iterate through the Eulerian circuit
+    for edge in chEulerianCircuit:
+        start, end = edge
+
+        # Add the starting node to the tour if it hasn't been visited
+        if start not in visited:
+            found_path.append(start)
+            visited.add(start)
+
+        # Add the ending node to the tour if it hasn't been visited
+        if end not in visited:
+            found_path.append(end)
+            visited.add(end)
+
+    # Add the starting node to close the TSP tour
+    found_path.append(found_path[0])
+
+    # Calculate the total distance of the tour
+    total_distance = 0
+    for i in range(len(found_path) - 1):
+        print(f"Added {i} to {i + 1}")
+        total_distance += christofidesMatrix[found_path[i]][found_path[i + 1]]
+    
+    # Return the tour and its total weight
+    
+    return found_path, total_distance
+
+def ant_colony_tsp(coords): 
+    
+    pheremoneVals = ones((len(coords), len(coords)))
+    
+    antDistanceVals = generate_distance_matrix(coords)
+    
+    bestPathVal = []
+    
+    bestDistVal = float('inf')
+    
+    iterationNumVal = max(100, len(coords)*5)
+    
+    antNumVal = max(10, len(coords)//2)
+    
+    #Above this initialize everything.
+    
+    for runs in range(iterationNumVal): 
+        
+        antCurPaths = []
+        pathLenVals = []
+        
+        for ants in range(antNumVal): 
+            
+            curCityVal = random.randint(len(coords))
+            
+            visitCityList = [0, curCityVal]
+            
+            totDistTrav = 0
+            #3 lines above intialize each ant's travels
+            
+            #This loop runs until all cities are visited
+            while len(set(visitCityList)) < len(coords): 
+                
+                notVisitedCityList = [place for place in range(len(coords)) if place not in visitCityList] #This line makes a list of the cities that have not been visited yet.
+                
+                nearCityVal = min(notVisitedCityList, key = lambda city: antDistanceVals[curCityVal][city])
+                
+                distNearCity = antDistanceVals[curCityVal][nearCityVal]
+                #Accessing matrix to find nearest city and distance to nearest city.
+                
+                totDistTrav = totDistTrav + distNearCity
+                
+                visitCityList.append(nearCityVal)
+                curCityVal = nearCityVal
+                
+            #return to start
+            totDistTrav += antDistanceVals[curCityVal][visitCityList[0]]
+            
+            antCurPaths.append(visitCityList)
+            
+            pathLenVals.append(totDistTrav)
+            
+        pheremoneVals *= 0.9
+        
+        for path, distVal in zip(antCurPaths, pathLenVals): 
+            
+            for itemValues in range(len(path) - 1): 
+                
+                pheremoneVals[path[itemValues]][path[itemValues+1]] += 1/distVal
+                pheremoneVals[path[itemValues+1]][path[itemValues]] += 1/distVal
+                
+    bestPathIndVal = argmin(pathLenVals)
+    bestPathVal = antCurPaths[bestPathIndVal]
+    bestDistVal = pathLenVals[bestPathIndVal]
+    
+    if bestPathVal[0] != 0: 
+        
+        bestPathVal.insert(0, 0)
+        
+    if bestPathVal[-1] != 0: 
+        
+        bestPathVal.append(0)
+        
+    
+    return bestPathVal, bestDistVal
+
+def simulatedAnnealing(coords): 
+    
+    #Have to create the initial Matrix
+    annealMatrix = generate_distance_matrix(coords)
+    
+    numberOfCities = len(coords) 
+    
+    #initialize cooling factor
+    coolingFactor = 0.95
+    
+    #Create random path to start with 
+    
+    annealCurPath = list(range(1, numberOfCities))
+    
+    shuffle(annealCurPath)
+    
+    annealCurPath = [0] + annealCurPath + [0]
+    
+    #Set initial temp very high
+    
+    annealTemp = 10000
+    
+    #set the initial best to the randomly generated set. (Calculate initial energy)
+    
+    bestAnnealPath = annealCurPath
+    bestAnnealEnergy = calc_total_distance(annealCurPath, annealMatrix)
+    
+    for annealIterate in range(10000): 
+        
+        #generate new candidate solution
+        
+        restOfPath = annealCurPath[1:-1].copy()
+        
+        shuffle(restOfPath)
+        
+        newPathVal = [0] + restOfPath + [0]
+        
+        curEnergyVal = calc_total_distance(annealCurPath, annealMatrix)
+        
+        newEnergyVal =  calc_total_distance(newPathVal, annealMatrix)
+        
+        if newEnergyVal < curEnergyVal or uniform(0, 1) < exp((curEnergyVal - newEnergyVal)/annealTemp): 
+            
+            annealCurPath = newPathVal
+            curEnergyVal = newEnergyVal
+            
+        if curEnergyVal < bestAnnealEnergy: 
+            
+            bestAnnealPath = annealCurPath
+            bestAnnealEnergy = curEnergyVal
+            
+        annealTemp = annealTemp * coolingFactor
+        #change the max temp
+    
+    if bestAnnealPath[0] != 0: 
+        
+        bestAnnealPath.insert(0, 0)
+        
+    if bestAnnealPath[-1] != 0:
+        
+        bestAnnealPath.append(0)
+    
+    return bestAnnealPath, bestAnnealEnergy
   
 def run_algorithm(algorithm, coords):
     if algorithm == 'brute_force':
@@ -413,12 +930,20 @@ def run_algorithm(algorithm, coords):
          return branch_and_bound_tsp(coords)
     elif algorithm == 'held_karp':
         return held_karp_tsp(coords)
+    elif algorithm == 'two_opt':
+        return two_opt_tsp(coords)
+    elif algorithm == 'christofides':
+        return christofides_tsp(coords)
+    elif algorithm == 'ant_colony':
+        return ant_colony_tsp(coords)
+    elif algorithm == 'simulated_annealing':
+        return simulatedAnnealing(coords)
 
 def main():
     # Argument parsing
     parser = argparse.ArgumentParser(description='Solve TSP problem using different algorithms.')
     parser.add_argument('dataset', type=str, help='TSP dataset file path.')
-    parser.add_argument('algorithm', type=str, choices=['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp'], help='Algorithm to use.')
+    parser.add_argument('algorithm', type=str, choices=['brute_force', 'nearest_neighbor', 'branch_and_bound', 'held_karp', 'two_opt', 'christofides', 'ant_colony', 'simulated_annealing'], help='Algorithm to use.')
     parser.add_argument('--timeout', type=int, default=60, help='Timeout for the algorithm in seconds.')
     args = parser.parse_args()
 

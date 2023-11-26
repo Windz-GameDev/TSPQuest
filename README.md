@@ -27,8 +27,6 @@ This repository was created for our COT6405 class project - "The Traveling Sales
 
 ## Algorithms
 
-Note: This Repo is a work in progress; not all algorithms have been implemented yet.
-
 The script in this repository implements the following algorithms for solving the TSP:
 
 1. **Brute Force**: An exact algorithm that generates all possible tours and then selects the shortest one. Time Complexity: \(O(n!)\).
@@ -41,13 +39,17 @@ The script in this repository implements the following algorithms for solving th
 
 5. **2-Opt Algorithm**: A heuristic algorithm. Time Complexity: \(O(n^2)\) for each 2-opt move, \(O(n^3)\) if applied exhaustively.
 
-6. **Simulated Annealing**: A probabilistic technique. Time Complexity: Varies depending on parameters, typically \(O(n^2)\) per iteration for TSP.
+6. **Christofides Algorithm**: A heuristic algorithm that combines a minimum spanning tree and a minimum weight graph. Time Complexity: \(O(n^3)\). This comes from the matching algorithm, the rest of the algorithm would just be \(O(n^2\).
+
+7. **Ant Colony Optimization Algorithm**: A metaheuristic algorithm based on the pheremone navigation of ants. Time Complexity: \(O(m n^2)\)
+
+8. **Simulated Annealing**: A probabilistic technique. Time Complexity: Varies depending on parameters, typically \(O(n^2)\) per iteration for TSP.
 
 ## Dataset
 
 The script uses the following TSP datasets, which were retrieved from [The University of Waterloo's TSP page](https://www.math.uwaterloo.ca/tsp/world/countries.html):
 
-- `lu98.tsp`: Represents the locations of 980 cities in Luxembourg.
+- `lu980.tsp`: Represents the locations of 980 cities in Luxembourg.
 - `qa194.tsp`: Represents 194 locations in Qatar.
 - `wi4.tsp`: Represents the locations of 4 cities in Western Sahara. (A trimmed down version of the next dataset which we modified.)
 - `wi29.tsp`: Represents the locations of 29 cities in Western Sahara.
@@ -58,6 +60,8 @@ We also use our own TSP dataset generator, which is based on the file structure 
 ## Usage
 
 ## Running the `tsp_dataset_generator.py` Script
+
+The purpose of the tsp_dataset_generator.py script is to generate unique datasets on which one may run the various datasets programmed into `benchmark.py`
 
 Execute the TSP generator script by using the following command structure in your terminal:
 
@@ -100,7 +104,7 @@ python benchmark.py Datasets/<dataset> <algorithm> [options]
 
 ### Parameters
 
-- `<dataset>`: (Required) The name of the TSP dataset file you wish to use (e.g., `lu98.tsp`).
+- `<dataset>`: (Required) The name of the TSP dataset file you wish to use (e.g., `lu980.tsp`).
 - `<algorithm>`: (Required) Specify the algorithm you want to use. Available algorithms include:
   - `brute_force`
   - `branch_and_bound`
@@ -116,22 +120,22 @@ python benchmark.py Datasets/<dataset> <algorithm> [options]
 ### Examples
 
 ```bash
-python benchmark.py Datasets/lu98.tsp nearest_neighbor
+python benchmark.py Datasets/lu980.tsp nearest_neighbor
 ```
 
 This example command will:
-  -Run the nearest neighbor algorithm on the `lu98.tsp` dataset.
+  -Run the nearest neighbor algorithm on the `lu980.tsp` dataset.
   -It will have the default timeout of 60 seconds.
   -It will display the dataset used, algorithm used, path, number of cities, total distance, and the elapsed time.
   -It will visualize the final path using a scatterplot.
   -If it times out, it will display skipping the algorithm.
 
 ```bash
-python benchmark.py Datasets/lu98.tsp brute_force --timeout 5
+python benchmark.py Datasets/lu980.tsp brute_force --timeout 5
 ```
 
 This example command will:
-  -Run the brute force algorithm on the `lu98.tsp` dataset.
+  -Run the brute force algorithm on the `lu980.tsp` dataset.
   -It will have a timeout of 5 seconds.
   -If it finishes, it will display the dataset, the algorithm, the path, the number of cities, the total distance, and the elapsed time.
   -It will visualize the final path using a scatterplot if it finishes.
@@ -165,11 +169,11 @@ This example command will:
 - If any algorithm times out, NaN will be filled in for distance and elapsed time for that algorithm on the CSV.
  
 ```bash
-python run_benchmark.py Datasets/lu98.tsp results.csv --timeout 5
+python run_benchmark.py Datasets/lu980.tsp results.csv --timeout 5
 ```
 
 This example command will:
-- This command will print the results of each algorithm on the `lu98.tsp` dataset
+- This command will print the results of each algorithm on the `lu980.tsp` dataset
 - The results will be stored in the `results.csv` file in the same directory as the run_benchmark.py file.
 - Any single algorithm gets 5 seconds at most to run.
 - If any algorithm times out, NaN will be filled in for distance and elapsed time in the CSV for that algorithm.
@@ -204,12 +208,14 @@ Please replace `data.csv` with the path to your actual CSV file. The CSV file sh
 The scripts require Python and the following Python libraries:
 
 ### Standard Libraries (Pre-installed with Python)
+- `sys`
 - `argparse`
 - `math`
-- `itertools`
 - `time`
-- `random`
 - `os`
+- `heapq`
+- `random`
+- `itertools`
 - `subprocess`
 - `csv`
 - `copy`
@@ -217,19 +223,63 @@ The scripts require Python and the following Python libraries:
   
 ### External Libraries (Need to be installed separately)
 - `matplotlib`
+- `networkx`
+- `numpy`
+- `func_timeout`
+- `mpl_toolkits`
 - `seaborn`
 - `pandas`
-- `func_timeout`
   
 
 ## References
 
-GeeksForGeeks code implementations for various algorithms were heavily referenced in this study: https://www.geeksforgeeks.org/
+\[1\] GeeksforGeeks, “Traveling salesman problem (TSP) implementation,” GeeksforGeeks, https://www.geeksforgeeks.org/traveling-salesman-problem-tsp-implementation/. 
 
-- Brute Force
-- Branch and Bound
-- Dynammic Programming
-- Nearest Neighbor
+\[2\] A. Bari, “7.3 traveling salesman problem - branch and bound,” YouTube, https://www.youtube.com/watch?v=1FEP_sNb62k&amp;t=515s. 
+
+\[3\] GeeksforGeeks, “Traveling salesman problem using branch and bound,” GeeksforGeeks, https://www.geeksforgeeks.org/traveling-salesman-problem-using-branch-and-bound-2/. 
+
+\[4\] GeeksforGeeks, “Travelling salesman problem using Dynamic Programming,” GeeksforGeeks, https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/. 
+
+\[5\] C. Keirua, “Traveling salesman problem with 2-Opt,” KeiruaProd, https://www.keiruaprod.fr/blog/2021/09/15/traveling-salesman-with-2-opt.html. 
+
+\[6\] GeeksforGeeks, “Prim’s algorithm for minimum spanning tree (MST),” GeeksforGeeks, https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/. 
+
+\[7\] NetworkX, “Network X documentation for compose,” NetworkX, https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.operators.binary.compose.html. 
+
+\[8\] M. Gazda, “Christofides algorithm in Python,” Matej Gazda, http://matejgazda.com/christofides-algorithm-in-python/. 
+
+\[9\] A. Buchanan, “TSP christofides algorithm,” YouTube, https://www.youtube.com/watch?v=Uu2ptesvteE. 
+
+\[10\] “Christofides algorithm,” notebook.community, https://notebook.community/DhashS/Olin-Complexity-Final-Project/code/03_approximation_algorithms. 
+
+\[11\] NetworkX, “Converting to and from other data formats,” NetworkX 3.2.1 documentation, https://networkx.org/documentation/stable/reference/convert.html. 
+
+\[12\] NetworkX, “Network X documentation for Christofides,” NetworkX, https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.approximation.traveling_salesman.christofides.html. 
+
+\[13\] GeeksforGeeks, “Travelling salesman problem: Greedy Approach,” GeeksforGeeks, https://www.geeksforgeeks.org/travelling-salesman-problem-greedy-approach/. 
+
+\[14\] I. Ramamurthy, “Implementing ant colony optimization in python- solving traveling salesman problem,” Medium, https://induraj2020.medium.com/implementation-of-ant-colony-optimization-using-python-solve-traveling-salesman-problem-9c14d3114475#:~:text=Implementing%20Ant%20colony%20optimization%20in%20python%2D%20solving%20Traveling%20salesman%20problem,-Induraj&amp;text=Ant%20colony%20optimization%20(ACO)%20is,by%20the%20behavior%20of%20ants. 
+
+\[15\] J. Bakulikira, “Ant Colony Traveling Salesman Algorithm,” GitHub, https://github.com/Josephbakulikira/Traveling-Salesman-Algorithm/blob/master/antColony.py. 
+
+\[16\] “Ant colony optimization using Python,” YouTube, https://www.youtube.com/watch?v=EJKdmEbGre8 (accessed Nov. 24, 2023). 
+
+\[17\] C. W. Alvarenga, “How to implement simulated annealing algorithm in Python,” Medium, https://medium.com/swlh/how-to-implement-simulated-annealing-algorithm-in-python-ab196c2f56a0. 
+
+\[18\] J. Brownlee, “Simulated annealing from scratch in Python,” Machine Learning Mastery, https://machinelearningmastery.com/simulated-annealing-from-scratch-in-python/. 
+
+\[19\] M. Perry, “simanneal,” GitHub, https://github.com/perrygeo/simanneal/blob/master/simanneal/anneal.py (accessed Nov. 25, 2023). 
+
+\[20\] N. Rooy, “Effective simulated annealing with python,” nathanrooy.github.io, https://nathanrooy.github.io/posts/2020-05-14/simulated-annealing-with-python/. 
+
+\[21\] F. Liang, “Optimization techniques-simulated annealing,” Medium, https://towardsdatascience.com/optimization-techniques-simulated-annealing-d6a4785a1de7. 
+
+\[22\] Baeldung contributors, “Simulated annealing explained,” Baeldung on Computer Science, https://www.baeldung.com/cs/simulated-annealing (accessed Nov. 25, 2023). 
+
+\[23\] “Simulated annealing algorithm in python - travelling salesperson problem,” YouTube, https://www.youtube.com/watch?v=35fzyblVdmA. 
+
+\[24\] W. Cook, “National Traveling Salesman Problems,” Solving TSPs, https://www.math.uwaterloo.ca/tsp/world/countries.html (accessed Nov. 25, 2023). 
 
 ## Authors
 
