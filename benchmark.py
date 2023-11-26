@@ -1,34 +1,35 @@
 '''
     Source Code for Algorithms Project for COT6405
 
-<<<<<<< HEAD
-    Algorithms for Brute Force, Nearest Neighor, Branch and Bound, Dynamic programming are 
-    referenced from GeeksForGeeks to ensure accurate implementation. Datasets are either auto generated or sourced from
+    Algorithms for Brute Force, and Nearest Neighor were initially 
+    referenced from GeeksForGeeks to ensure accurate implementation. Branch and bround is
+    referenced from Abdul Bari's guide on youtube linked below. Dynamic Programming solution 
+    used multiple resources as a reference. Datasets are either auto generated or sourced from
     The University of Waterloo in Waterloo, Ontario, Canada
     2-opt is referenced from KeiruaProd to ensure accurate implementation.
-=======
-    Algorithms for Brute Force, Nearest Neighor, and Dynamic programming are 
-    referenced from GeeksForGeeks to ensure accurate implementation. Branch and bround is
-    referenced from Abdul Bari's guide on youtube linked below.
-    Datasets are from The University of Waterloo.
->>>>>>> origin/master
 
     References: 
-    BruteForce - https://www.geeksforgeeks.org/traveling-salesman-problem-tsp-implementation/
-    Branch and Bound - https://www.youtube.com/watch?v=1FEP_sNb62k&t=515s
-                     - https://www.geeksforgeeks.org/traveling-salesman-problem-using-branch-and-bound-2/
-    Dynamic Programming - https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/
-    2-Opt - https://www.keiruaprod.fr/blog/2021/09/15/traveling-salesman-with-2-opt.html
+    BruteForce 
+      1. https://www.geeksforgeeks.org/traveling-salesman-problem-tsp-implementation/
+    Nearest Neighbor 
+      1. https://www.geeksforgeeks.org/travelling-salesman-problem-greedy-approach/
+    Branch and Bound 
+      1. https://www.youtube.com/watch?v=1FEP_sNb62k&t=515s
+      2. https://www.geeksforgeeks.org/traveling-salesman-problem-using-branch-and-bound-2/
+    Dynamic Programming 
+      1. https://www.geeksforgeeks.org/travelling-salesman-problem-using-dynamic-programming/
+      2. https://www.youtube.com/watch?v=Q4zHb-Swzro&t=0s
+      3. https://www.youtube.com/watch?v=JE0JE8ce1V0&t=705s
+    2-Opt - 
+      1. https://www.keiruaprod.fr/blog/2021/09/15/traveling-salesman-with-2-opt.html
     Christofides - 
-        CHANGED AND USED DIFFERENT METHOD FOR MST - Prim's algorithm portion of Christofides - https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/
-        Other aspects of Christofides - 
-            https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.operators.binary.compose.html
-            http://matejgazda.com/christofides-algorithm-in-python/
-            https://www.youtube.com/watch?v=Uu2ptesvteE
-            https://notebook.community/DhashS/Olin-Complexity-Final-Project/code/03_approximation_algorithms
-            https://networkx.org/documentation/stable/reference/convert.html
-            https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.approximation.traveling_salesman.christofides.html#christofides
-    Greedy - https://www.geeksforgeeks.org/travelling-salesman-problem-greedy-approach/
+      1. https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/
+      2. https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.operators.binary.compose.html
+      3. http://matejgazda.com/christofides-algorithm-in-python/
+      4. https://www.youtube.com/watch?v=Uu2ptesvteE
+      5. https://notebook.community/DhashS/Olin-Complexity-Final-Project/code/03_approximation_algorithms
+      6. https://networkx.org/documentation/stable/reference/convert.html
+      7. https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.approximation.traveling_salesman.christofides.html#christofides
     Ant Colony - 
         1. https://induraj2020.medium.com/implementation-of-ant-colony-optimization-using-python-solve-traveling-salesman-problem-9c14d3114475#:~:text=Implementing%20Ant%20colony%20optimization%20in%20python%2D%20solving%20Traveling%20salesman%20problem,-Induraj&text=Ant%20colony%20optimization%20(ACO)%20is,by%20the%20behavior%20of%20ants.
         2. https://github.com/Josephbakulikira/Traveling-Salesman-Algorithm/blob/master/antColony.py 
@@ -77,7 +78,7 @@ def plot_path(coords, path, algorithm, total_distance, time):
     # Plot the path taken
     for i in range(len(path) - 1): # Stop at one less than the final city because final city will try to connect to a city out of bounds
         plt.plot((coords[path[i]][0], coords[path[i+1]][0]), (coords[path[i]][1], coords[path[i+1]][1]), 'r-') # First argument is a tuple containing the x coordinates of the first and second city, the second tuple is for the y coordinates respectively
-    #plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path incase the first city was not appended to the end of the path list
+    # plt.plot((coords[path[-1]][0], coords[path[0]][0]), (coords[path[-1]][1], coords[path[0]][1]), 'r-') # Connect the final city in the path to the first city in the path incase the first city was not appended to the end of the path list
 
     # Label the starting node as "Start"
     start_x, start_y = coords[path[0]]
@@ -472,8 +473,8 @@ def held_karp_tsp(coords):
         # Add the starting city to complete the hamiltonian cycle
         best_path.append(0)
         return best_path
-
-
+    
+    
     num_cities = len(coords)
     distance_matrix = generate_distance_matrix(coords, 0)
     ''' 
@@ -504,7 +505,7 @@ def held_karp_tsp(coords):
     final_path = reconstruct_path()
 
     return final_path, final_cost
-
+      
 #two-opt function
 def two_opt_tsp(coords): 
     
@@ -593,9 +594,11 @@ def christofides_tsp2(coords):
         This function implements the Christofides algorithm for the Traveling Salesman Problem (TSP).
         It takes as input a list of coordinates and returns a tour and its total weight.
         
-        THIS VERSION IS A REPLICATION OF THE ONLINE IN ORDER TO TEST MAIN CHRISTOFIDES FUNCTION IS THE ONE WE CREATED.
-        https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.approximation.traveling_salesman.christofides.html#christofides
-        https://networkx.org/documentation/stable/_modules/networkx/algorithms/approximation/traveling_salesman.html
+        Dataset must form a metric space
+        
+        Utilizes networkx built in christofides function, other function 'çhristofides_tsp' does not
+          https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.approximation.traveling_salesman.christofides.html#christofides
+          https://networkx.org/documentation/stable/_modules/networkx/algorithms/approximation/traveling_salesman.html
     '''
 
     # Generate the distance matrix for the given coordinates
@@ -656,7 +659,12 @@ def christofides_tsp2(coords):
 
 """
 
-CHRISTOFIDES TSP BELOW IS THE FUNCTION WE USED TO PROCESS CHRISTOFIDES
+This function implements the Christofides algorithm for the Traveling Salesman Problem (TSP).
+It takes as input a list of coordinates and returns a tour and its total weight.
+
+Dataset must form a metric space
+
+Implemented without networkx built in function, used by default
 
 """
 
@@ -912,7 +920,7 @@ def simulatedAnnealing(coords):
         bestAnnealPath.append(0)
     
     return bestAnnealPath, bestAnnealEnergy
-
+  
 def run_algorithm(algorithm, coords):
     if algorithm == 'brute_force':
         return brute_force_tsp(coords)
