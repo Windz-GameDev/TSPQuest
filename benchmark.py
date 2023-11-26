@@ -604,25 +604,37 @@ def christofides_tsp2(coords):
     # Generate the distance matrix for the given coordinates
     christofidesMatrix = generate_distance_matrix(coords)
     
-    # Check symmetry
+    # Does the dataset fail the symmetric requirement for forming a metric space?
+    triangleSymmetricTruth = False
+    
     for i in range(len(christofidesMatrix)):
+        if triangleSymmetricTruth == True:
+            break
         for j in range(len(christofidesMatrix)):
             if christofidesMatrix[i][j] != christofidesMatrix[j][i]:
-                print("The distances are not symmetric.")
+                triangleSymmetricTruth = True
                 break
 
-    triangleInequalityTruth = False
+    # Warn the user if the dataset fails the symmetric requirement for forming a metric space
+    if triangleSymmetricTruth == True:    
+        print("The distances are not symmetric.")
 
-    # Check triangle inequality
+    # Does the dataset fail the triangle inequality requirement for forming a metric space?
+    triangleInequalityTruth = False
+    
     for i in range(len(christofidesMatrix)):
+        if triangleInequalityTruth == True: 
+            break
         for j in range(len(christofidesMatrix)):
+            if triangleInequalityTruth == True: 
+                break
             for k in range(len(christofidesMatrix)):
                 if christofidesMatrix[i][k] > christofidesMatrix[i][j] + christofidesMatrix[j][k]:
                     triangleInequalityTruth = True
                     break
-                    
+
+    # Warn user if dataset doesn't meet triangle inequality requirement                
     if triangleInequalityTruth == True: 
-        
         print("The distances do not obey the triangle inequality.")
         
 
@@ -650,7 +662,6 @@ def christofides_tsp2(coords):
     # Calculate the total distance of the tour
     total_distance = 0
     for city in range(len(shortest_path) - 1): 
-        print(f"Adding {city} to {city + 1}")
         total_distance += christofidesMatrix[shortest_path[city]][shortest_path[city + 1]]
     total_distance += christofidesMatrix[shortest_path[-1]][shortest_path[0]]
 
@@ -672,45 +683,37 @@ def christofides_tsp(coords):
     # Generate the distance matrix for the given coordinates
     christofidesMatrix = generate_distance_matrix(coords)
     
-    # Check symmetry
-    
+    # Does the dataset fail the symmetric requirement for forming a metric space?
     triangleSymmetricTruth = False
     
     for i in range(len(christofidesMatrix)):
-        
         if triangleSymmetricTruth == True:
             break
-        
         for j in range(len(christofidesMatrix)):
             if christofidesMatrix[i][j] != christofidesMatrix[j][i]:
                 triangleSymmetricTruth = True
                 break
-    
-    if triangleSymmetricTruth == True: 
-        
+
+    # Warn the user if the dataset fails the symmetric requirement for forming a metric space
+    if triangleSymmetricTruth == True:    
         print("The distances are not symmetric.")
 
-    # Check triangle inequality
-    
+    # Does the dataset fail the triangle inequality requirement for forming a metric space?
     triangleInequalityTruth = False
     
     for i in range(len(christofidesMatrix)):
-        
         if triangleInequalityTruth == True: 
             break
-        
         for j in range(len(christofidesMatrix)):
-            
             if triangleInequalityTruth == True: 
                 break
-            
             for k in range(len(christofidesMatrix)):
                 if christofidesMatrix[i][k] > christofidesMatrix[i][j] + christofidesMatrix[j][k]:
                     triangleInequalityTruth = True
                     break
-                    
+
+    # Warn user if dataset doesn't meet triangle inequality requirement                
     if triangleInequalityTruth == True: 
-        
         print("The distances do not obey the triangle inequality.")
 
     # Initialize a new NetworkX graph
@@ -774,11 +777,9 @@ def christofides_tsp(coords):
     # Calculate the total distance of the tour
     total_distance = 0
     for i in range(len(found_path) - 1):
-        print(f"Added {i} to {i + 1}")
         total_distance += christofidesMatrix[found_path[i]][found_path[i + 1]]
     
     # Return the tour and its total weight
-    
     return found_path, total_distance
 
 def ant_colony_tsp(coords): 
