@@ -580,9 +580,13 @@ def two_opt_tsp(coords):
     
     if currentRoute[0] != 0: 
         
+        currentDist += euclidean_distance(coords[0], coords[currentRoute[0]])
+        
         currentRoute.insert(0, 0)
         
     if currentRoute[-1] != 0: 
+        
+        currentDist += euclidean_distance(coords[currentRoute[0]], coords[currentRoute[-1]])
         
         currentRoute.append(0)
         
@@ -807,13 +811,13 @@ def ant_colony_tsp(coords):
             
             curCityVal = random.randint(len(coords))
             
-            visitCityList = [0, curCityVal]
+            visitCityList = [curCityVal]
             
             totDistTrav = 0
             #3 lines above intialize each ant's travels
             
             #This loop runs until all cities are visited
-            while len(set(visitCityList)) < len(coords): 
+            while len(visitCityList) < len(coords): 
                 
                 notVisitedCityList = [place for place in range(len(coords)) if place not in visitCityList] #This line makes a list of the cities that have not been visited yet.
                 
@@ -849,9 +853,13 @@ def ant_colony_tsp(coords):
     
     if bestPathVal[0] != 0: 
         
+        #bestDistVal += euclidean_distance(coords[0], coords[bestPathVal[0]])
+        
         bestPathVal.insert(0, 0)
         
     if bestPathVal[-1] != 0: 
+        
+        #bestDistVal += euclidean_distance(coords[bestPathVal[-1]], coords[0])
         
         bestPathVal.append(0)
         
