@@ -39,7 +39,7 @@ The script in this repository implements the following algorithms for solving th
 
 5. **2-Opt Algorithm**: A heuristic algorithm. Time Complexity: \(O(n^2)\) for each 2-opt move, \(O(n^3)\) if applied exhaustively.
 
-6. **Christofides Algorithm**: A heuristic algorithm that combines a minimum spanning tree and a minimum weight graph. Time Complexity: \(O(n^3)\). This comes from the matching algorithm, the rest of the algorithm would just be \(O(n^2\).
+6. **Christofides Algorithm**: A heuristic algorithm that combines a minimum spanning tree and a minimum weight graph. Time Complexity: \(O(n^3)\).
 
 7. **Ant Colony Optimization Algorithm**: A metaheuristic algorithm based on the pheremone navigation of ants. Time Complexity: \(O(m n^2)\)
 
