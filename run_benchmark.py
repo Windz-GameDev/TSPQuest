@@ -10,17 +10,24 @@ def main():
     # Setting up argument parsing
     parser = argparse.ArgumentParser(description="Run the benchmark script for all algorithms with the specified dataset and write results to a CSV file.")
     parser.add_argument('dataset', help='Path to the dataset file')
-    parser.add_argument('csv_file', help='Name of the CSV file to save results')
-    parser.add_argument('--timeout', type=int, default=60, help='Timeout for each algorithm in seconds.')
+    parser.add_argument('csv_file', help='Name of the CSV file to save results. Do not add file extension, it is handled automatically.')
+    parser.add_argument('--timeout', type=int, default=60, help='Timeout for each algorithm in seconds. Default is 60')
     args = parser.parse_args()
 
-    # Check if the file exists and has content
-    file_exists = os.path.isfile(args.csv_file) and os.path.getsize(args.csv_file) > 0
+    # Directory for benchmark results
+    results_dir = 'benchmark_results'
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
 
-    dataset_filename = os.path.basename(args.dataset) # Extract filename from the dataset path
+    # CSV filename with timeout
+    csv_filename = f"{args.csv_file}_timeout_{args.timeout}.csv"
+    csv_file_path = os.path.join(results_dir, csv_filename)
+
+    file_exists = os.path.isfile(csv_file_path) and os.path.getsize(csv_file_path) > 0
+    dataset_filename = os.path.basename(args.dataset)
 
     # Write the header to a CSV file
-    with open(args.csv_file, mode='a', newline='') as file:
+    with open(csv_file_path, mode='a', newline='') as file:
         writer = csv.writer(file)
 
         # If the file didn't exist or was empty, write the header
@@ -29,11 +36,7 @@ def main():
 
         # Run the benchmark.py script with different algorithms and capture the output
         for algorithm in algorithms:
-            command = ['python', 'benchmark.py', args.dataset, algorithm]
-
-            if args.timeout:
-                command.extend(['--timeout', str(args.timeout)])
-
+            command = ['python', 'benchmark.py', args.dataset, algorithm, '--timeout', str(args.timeout)]
             completed_process = subprocess.run(command, capture_output=True, text=True)
 
             algorithm_name = algorithm.replace('_', ' ').title()

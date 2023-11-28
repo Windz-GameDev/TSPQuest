@@ -95,7 +95,7 @@ def plot_path(coords, path, algorithm, total_distance, time, dataset_name):
     plt.ylabel("Y-Axis")
 
     # All figures go in the results directory
-    results_dir = 'results'
+    results_dir = 'path_results'
     
     # Ensure the main results directory exists
     if not os.path.exists(results_dir):
@@ -265,7 +265,7 @@ def mstMinKey (coords, mstKeyVal, mstMinSetVals):
     
 
 # Brute-force algorithm for solving the TSP
-def brute_force_tsp(coords): # Coords represents a list of tuples, the 0th element of any tupel represents the x element, and the 1st element of any tuple represents the y element
+def brute_force_tsp(coords): # Coords represent a list of tuples, the 0th element of any tuple represents the x element, and the 1st element of any tuple represents the y element
     min_distance = float('inf')  # Keep track of shortest distance so far, start at infinity so all paths found will be less than initial value
     best_path = None  # Keep track of the coordinate indices that represent the best path found so far
     
