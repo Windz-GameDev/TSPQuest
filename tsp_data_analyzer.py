@@ -34,7 +34,7 @@ def visualize_data(df, csv_basename):
         os.makedirs(specific_plots_dir)
 
     # 1. Scatter Plot
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 10))
     sns.scatterplot(x='Number of Cities', y='Elapsed Time (Seconds)', hue='Algorithm', data=df)
     plt.title('Relation between Number of Cities and Elapsed Time')
     plt.savefig(os.path.join(specific_plots_dir, 'cities_vs_elapsed_time.png'))
@@ -51,32 +51,37 @@ def visualize_data(df, csv_basename):
         if df_filtered.empty:
             print(f"\nNo algorithms managed to solve the dataset {dataset} in the given timeout duration or no valid data...")
             continue
-
-        # Bar Plot for Average Distance
-        plt.figure(figsize=(10, 6))
-        sns.barplot(x='Algorithm', y='Total Distance', data=df_filtered)
+            
+        # Adjust figure size and label font size
+        plt.figure(figsize=(12, 10))  # Reduced figure size
+        sns.barplot(x='Algorithm', y='Total Distance', data=df_filtered, errorbar=None)
         plt.title(f'Average Total Distance for {dataset}')
+        plt.xticks(rotation=45, fontsize=8)  # Adjust font size
+        plt.subplots_adjust(bottom=0.2)  # Increase bottom margin
         plt.savefig(os.path.join(dataset_dir, f'avg_distance_{dataset_name}.png'))
         plt.close()
 
-        # Bar Plot for Average Time
-        plt.figure(figsize=(10, 6))
-        sns.barplot(x='Algorithm', y='Elapsed Time (Seconds)', data=df_filtered)
+        plt.figure(figsize=(12, 10))
+        sns.barplot(x='Algorithm', y='Elapsed Time (Seconds)', data=df_filtered, errorbar=None)
         plt.title(f'Average Elapsed Time for {dataset}')
+        plt.xticks(rotation=45, fontsize=8)  # Adjust font size
+        plt.subplots_adjust(bottom=0.2)  # Increase bottom margin
         plt.savefig(os.path.join(dataset_dir, f'avg_time_{dataset_name}.png'))
         plt.close()
 
-        # Box Plot for Total Distance
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(12, 10))
         sns.boxplot(x='Algorithm', y='Total Distance', data=df_filtered)
         plt.title(f'Distribution of Total Distance by Algorithm for {dataset}')
+        plt.xticks(rotation=45, fontsize=8)  # Adjust font size
+        plt.subplots_adjust(bottom=0.2)  # Increase bottom margin
         plt.savefig(os.path.join(dataset_dir, f'distribution_total_distance_{dataset_name}.png'))
         plt.close()
 
-        # Box Plot for Elapsed Time
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(12, 10))
         sns.boxplot(x='Algorithm', y='Elapsed Time (Seconds)', data=df_filtered)
         plt.title(f'Distribution of Elapsed Time by Algorithm for {dataset}')
+        plt.xticks(rotation=45, fontsize=8)  # Adjust font size
+        plt.subplots_adjust(bottom=0.2)  # Increase bottom margin
         plt.savefig(os.path.join(dataset_dir, f'distribution_elapsed_time_{dataset_name}.png'))
         plt.close()
 
