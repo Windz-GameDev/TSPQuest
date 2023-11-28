@@ -67,8 +67,11 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import *
 
 
-def plot_path(coords, path, algorithm, total_distance, time):
-    
+def plot_path(coords, path, algorithm, total_distance, time, dataset_name):
+
+    # Set figure size (width, height in inches)
+    plt.figure(figsize=(10, 8))
+
     # Unpack the coordinates list of tuples into two seperate list, x, and y, zip groups first elements (x-coordinates together, and second elements (y-coordinates together)
     x, y = zip(*coords)
 
@@ -91,8 +94,32 @@ def plot_path(coords, path, algorithm, total_distance, time):
     plt.xlabel("X-Axis")
     plt.ylabel("Y-Axis")
 
-    # Show the plot
-    plt.show()
+    # All figures go in the results directory
+    results_dir = 'results'
+    
+    # Ensure the main results directory exists
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
+
+    # Create a subdirectory for the dataset within the results directory
+    dataset_dir = os.path.join(results_dir, dataset_name)
+    if not os.path.exists(dataset_dir):
+        os.makedirs(dataset_dir)
+
+    # Initial number to append to filename
+    counter = 1
+
+    # Check for existing files and increment counter
+    while True:
+        file_path = os.path.join(dataset_dir, f"{algorithm}_{counter}.png")
+        if not os.path.exists(file_path):
+            break
+        counter += 1
+
+    # Save the plot with the incremented filename
+    plt.savefig(file_path)
+    print(f"Plot saved as {file_path}")
+    plt.close()
 
 def generate_distance_matrix(coords, self_distance = 0):
     num_cities = len(coords)
@@ -974,8 +1001,11 @@ def main():
     if path is not None and distance is not None:
         print(f"Dataset: {dataset_filename} | Algorithm: {args.algorithm.replace('_', ' ').title()} | Path: {path} | Number of locations: {len(coords)} | Distance: {distance} | Elapsed time: {totalTime} seconds")
         
+        # Remove the file extension from the dataset name
+        dataset_name = os.path.splitext(dataset_filename)[0]
+
         # Plot the path
-        plot_path(coords, path, args.algorithm, distance, totalTime)
+        plot_path(coords, path, args.algorithm, distance, totalTime, dataset_name)
 
 
 # Entry point of the script
