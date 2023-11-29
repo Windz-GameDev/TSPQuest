@@ -180,7 +180,20 @@ def reduce_matrix(distance_matrix):
 
     return distance_matrix, cost # Return reduced distance matrix, aditionally return the cost to be used in calculating the lower bound of a node 
 
-# Function to calculate Euclidean distance between two points
+'''
+    The euclidean_distance function takes two coordinate tuples representing cities.
+    All coordinate tuples contain a city's x and y coordinates in the TSP problem, indexed 0 and 1
+    respectively. The first tuple represents the current city, and the second tuple is the destination city.
+
+    The function computes the euclidean distance by calculating the square root of the sum of the squared 
+    differences in the x and y coordinates of the two points.
+
+    When the function completes, it returns the euclidean distance between these two cities. 
+    This a measure of the straight-line distance between them in a 2D plane.
+
+    This function runs in O(1) or constant time, as the computation requires 
+    a fixed number of arithmetic operations, regardless of input size.
+'''
 def euclidean_distance(point1, point2):
     return math.sqrt((point2[0] - point1[0])**2 + (point2[1] - point1[1])**2)
 
@@ -265,14 +278,13 @@ def mstMinKey (coords, mstKeyVal, mstMinSetVals):
     
 
 '''
- Simplest solution for solving the TSP, but also the longest. It generates all possible path permutations which visit each city exactly one time,  
- except for the starting city at the beginning and again at the end which is required to form a Hamiltonian Cycle. A Hamiltonian cycle in the TSP context 
- refers to a complete tour that visits each city eaxctly once and returns to the starting city. Generating each permutation has a big O(n!) time complexity. After generating each permutation it  
- checks the length of each path, and returns the smallest one. It does this keeping track of the min distance and best path, and updating these variables when a new better path
- is found. This path checking process is O(n) for each permutation, making the total time complexity O(n! * n). The storage requirement is O(n), this is because aside from the input,
- only the best path and the current path are stored at any specific moment in time. This is due the memory efficiency of the iteertools permutation function. Since both both paths are the size of N, 
- this would be 2N, in Big O Notation we may drop the constant, so this simplifies to O(N).
-
+    Simplest solution for solving the TSP, but also the longest. The brute force approach generates all possible path permutations which visit each city exactly one time,  
+    except for the starting city at the beginning and again at the end which is required to form a Hamiltonian Cycle. A Hamiltonian cycle in the TSP context 
+    refers to a complete tour that visits each city eaxctly once and returns to the starting city. Generating each permutation has a big O(n!) time complexity. After generating each permutation it  
+    checks the length of each path, and returns the smallest one. This garuntees this algorithm will return the best possible answer. 
+    It does this keeping track of the min distance and best path, and updating these variables when a new better path is found. This path checking process is O(n) for each permutation, making the 
+    total time complexity O(n! * n). The storage requirement is O(n), this is because aside from the input, only the best path and the current path are stored at any specific moment in time. 
+    This is due the memory efficiency of the iteertools permutation function. Since both both paths are the size of N, this would be 2N, in Big O Notation we may drop the constant, so this simplifies to O(N).
 '''
 def brute_force_tsp(coords): # Coords represents a list of tuples, the 0th element of any tuple represents the x element, and the 1st element of any tuple represents the y element
     min_distance = float('inf')  # Keep track of shortest distance so far, start at infinity so all paths found will be less than initial value
@@ -308,43 +320,68 @@ def brute_force_tsp(coords): # Coords represents a list of tuples, the 0th eleme
     best_path.append(best_path[0]) # Make the first element of the best path the last element as well to complete the hamiltonian cycle
     return best_path, min_distance # Return the optimal answer to the TSP problem 
 
-# Greedy algorithm for solving TSP
+'''
+    The below function implements the greedy approach for the TSP, also known as nearest neighbor. This algorithm works by making the locally best decision at any point in time.
+    However, this approach may not return the best or optimal decision like brute force. The advantage of this algorithm is that it runs in Polynomial time O(n^2) vs O(n! * n) of Brute Force. 
+    In addition it also uses 2 * N or O(n) storage space.
+'''
 def nearest_neighbor_tsp(coords):
-    num_cities = len(coords) # The number of coords tuples in the coords list gives us the number of cities the problem
-    cities_left_to_visit = set(range(num_cities)) # Keep track of the unvisted cities using a set of integers, each representing the index of a point in the coords list from 0 to len of num_cities - 1
-    found_path = [] # Initialize an empty list which will contain the path of city indexes for the coords list
-    current_city = 0  # Start from the first city
-    found_path.append(current_city) # Add first city to the found path so we can keep track of our starting point
-    cities_left_to_visit.remove(current_city) # First city has been visited so it should not be visited again until the very end of the algorithm to complete the hamiltonian cycle
-    found_distance = 0 # Keep track of the total distance of the found path, we start at 0 since we are still at the starting position
+
+    # The number of coordinate point tuples in the coords list gives us the number of cities in the problem
+    num_cities = len(coords) 
     
-    # Visit nearest unvisited city
-    while cities_left_to_visit: # Not all cities have been visited yet so we keep constructing the path
+    # Keep track of the unvisted cities using a set of integers, each representing the index of a point in the coords list from 0 to len of num_cities - 1. This takes O(n) space.
+    cities_left_to_visit = set(range(num_cities)) 
+
+    # Initialize an empty list which will contain the path of city indexes for the coords list (will store found path by NN). Takes O(n) space.
+    found_path = [] 
+
+     # Start from the first city in the dataset (arbitrarily chosen)
+    current_city = 0 
+
+    # Add first city to the found path so we can keep track of our starting point
+    found_path.append(current_city) 
+
+    # First city has been visited so it should not be visited again until the very end of the algorithm to complete the hamiltonian cycle
+    cities_left_to_visit.remove(current_city) 
+
+    # Keep track of the total distance of the found path, we start at 0 since we are still at the starting position
+    found_distance = 0 
+    
+    '''
+        Visit nearest unvisited city as long as all cities have not been visited. The time complexity of the code inside the while loop is 
+        O(n). Since the while loop will iterate n - 1 times, the while loop contributes a time complexity of O(n^2).
+    '''
+    while cities_left_to_visit:
         '''
-            To find where we need to go from the current city, we need to look through all of the unvisited cities, and find the one the minimum euclidean distance
-            min returns to us the smallest item in an iterable, or the smallest of two or more arguments, in this case, our iterable is the unvisited set
-            The key argument is a function that is used to compute a key for each item in our iterable, essentially each city is given a distance key, iterable: 1 - key: 20 
-            The key is used to guide the min function in how to make the min comparison, the key for each iterable is the euclidean distance between the current city and that unvisited city
-            The min function will then find the item with the smallest key (distance) and return it to the variable nearest_city
-
-
-            The euclidean_distance function takes two coordinate tuples which are accessed using two indexes, 
-            both tuples represent a city's x, y coordinates in the TSP problem. The indexes are for the 
-            the current city, and the nearest city's tuple location in the coords list. 
-            When the function completes, it returns the euclidean distance between those cities.
-
-            Important Note: min will not consider cities that have been removed from the cities_left_to_visit set at the end of each iteration, meaning a city can't be traveled to twice
-
+            To find where we need to go from the current city, we need to look through all of the unvisited cities, and find the one that adds the minimum euclidean distance
+            to our path in the short term. We do this passing the cities_left_to_visit set to the min function, and give each index in the set a key which is considered by the min 
+            function in its comparisons. We do this by using a key argument, a function to compute the key for each city index, taking the currently considered city in the set as a
+            parameter. The computed key is the euclidean distance from the current city to the next city being considered. We get the euclidean distance by passing in the indexes of 
+            the starting city and the destination city being considered in the unvisited set to the euclidean distance function as arguments. The city index in the unvisited set
+            with the smallest key will be returned by the min function. This process of finding the minimum euclidean distance for each move is O(n). Only two keys are ever stored at a
+            time in the minimum function, the minimum key, and the key of the city being evaluated to see if it's less than the minimum. Therefore the keys contribute a storage complexity of O(1).
         '''
         nearest_city = min(cities_left_to_visit, key=lambda city: euclidean_distance(coords[current_city], coords[city])) 
-        found_distance += euclidean_distance(coords[current_city], coords[nearest_city]) # Since we are traveling to next city in the path, we have to add the distance to get there to total distance
-        current_city = nearest_city # Adjust our current location to the city we just traveled to
-        found_path.append(current_city) # Add the index of the current city to our found path so we know the path which provided our found distance at the end
-        cities_left_to_visit.remove(current_city) # Our current city has been visited so we should not travel to it again according to the definition of the TSP problem
+
+        # Since we are traveling to next city in the path, we have to add the distance to get there to total distance
+        found_distance += euclidean_distance(coords[current_city], coords[nearest_city]) 
+
+        # Adjust our current location to the city we just traveled to
+        current_city = nearest_city 
+
+        # Add the index of the current city to our found path so we know the path which provided our found distance at the end
+        found_path.append(current_city) 
+
+        # Our current city has been visited so we should not travel to it again according to the definition of the TSP problem and a Hamiltonian cycle.
+        cities_left_to_visit.remove(current_city)
     
-    found_distance += euclidean_distance(coords[current_city], coords[found_path[0]]) # Now that every city has been visited, we must return from the last city back to the start to complete the hamiltonian cycle
+    # Now that every city has been visited, we must return from the last city back to the start to complete the hamiltonian cycle
+    found_distance += euclidean_distance(coords[current_city], coords[found_path[0]]) 
     found_path.append(found_path[0])
-    return found_path, found_distance # Now that we have the path and total distance, we must return them so we can visualize the results
+
+    # Now that we have the path and total distance, we must return them so we can visualize the results
+    return found_path, found_distance 
 
 # Branch and Bound algorithm for solving the TSP
 def branch_and_bound_tsp(coords):
