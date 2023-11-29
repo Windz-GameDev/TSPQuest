@@ -274,7 +274,7 @@ def mstMinKey (coords, mstKeyVal, mstMinSetVals):
  this would be 2N, in Big O Notation we may drop the constant, so this simplifies to O(N).
 
 '''
-def brute_force_tsp(coords): # Coords represent a list of tuples, the 0th element of any tuple represents the x element, and the 1st element of any tuple represents the y element
+def brute_force_tsp(coords): # Coords represents a list of tuples, the 0th element of any tuple represents the x element, and the 1st element of any tuple represents the y element
     min_distance = float('inf')  # Keep track of shortest distance so far, start at infinity so all paths found will be less than initial value
     best_path = None  # Keep track of the coordinate indices that represent the best path found so far
     
