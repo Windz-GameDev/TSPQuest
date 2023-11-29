@@ -29,7 +29,7 @@ This repository was created for our COT6405 class project - "The Traveling Sales
 
 The script in this repository implements the following algorithms for solving the TSP:
 
-1. **Brute Force**: An exact algorithm that generates all possible tours and then selects the shortest one. Time Complexity: \(O(n!)\).
+1. **Brute Force**: An exact algorithm that generates all possible tours and then selects the shortest one. Time Complexity: \(O(n! * n)\).
 
 2. **Branch and Bound**: An exact algorithm that uses a tree search strategy. Time Complexity: Varies, best case \(O(n^2 \log n)\), worst case \(O(2^n)\).
 
