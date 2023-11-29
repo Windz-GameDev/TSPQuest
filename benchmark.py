@@ -264,21 +264,42 @@ def mstMinKey (coords, mstKeyVal, mstMinSetVals):
     return mstMinIndexNum
     
 
-# Brute-force algorithm for solving the TSP
+'''
+ Simplest solution for solving the TSP, but also the longest. It generates all possible path permutations which visit each city exactly one time,  
+ except for the starting city at the beginning and again at the end which is required to form a Hamiltonian Cycle. A Hamiltonian cycle in the TSP context 
+ refers to a complete tour that visits each city eaxctly once and returns to the starting city. Generating each permutation has a big O(n!) time complexity. After generating each permutation it  
+ checks the length of each path, and returns the smallest one. It does this keeping track of the min distance and best path, and updating these variables when a new better path
+ is found. This path checking process is O(n) for each permutation, making the total time complexity O(n! * n). The storage requirement is O(n), this is because aside from the input,
+ only the best path and the current path are stored at any specific moment in time. This is due the memory efficiency of the iteertools permutation function. Since both both paths are the size of N, 
+ this would be 2N, in Big O Notation we may drop the constant, so this simplifies to O(N).
+
+'''
 def brute_force_tsp(coords): # Coords represent a list of tuples, the 0th element of any tuple represents the x element, and the 1st element of any tuple represents the y element
     min_distance = float('inf')  # Keep track of shortest distance so far, start at infinity so all paths found will be less than initial value
     best_path = None  # Keep track of the coordinate indices that represent the best path found so far
     
-    ''' Take the number of coordinates, generate a range of of numbers from that length, each representing a coordinate index, 
+    ''' Take the number of coordinates, generate a range of numbers from that length, each representing a coordinate index, 
     going from 0 to len(coords) - 1, and generate all permutations of that range, representing all paths we can take through the list of coordinates'''
     for current_path in permutations(range(len(coords))): # Calculate the distance of each permutation or path
         current_distance = 0 # Start with a distance of 0 for each path or permutation
+        min_potential = True
         for i in range(len(current_path) - 1): # We need to start stop before the final location in the path because we access the next index in the loop.
             ''' We calculate the euclidean distance between two coordinates by calling the euclidean_distance function, 
             We pass in two coordinate tuples from the coordinates list, accessing them using the path indices of the current location and the next in the path'''
             current_distance += euclidean_distance(coords[current_path[i]], coords[current_path[i+1]]) 
-        current_distance += euclidean_distance(coords[current_path[-1]], coords[current_path[0]]) # Now, we connect the final location in the path to the starting position to complete the cycle
- 
+            
+            # If current permutation clearly will not be better than the current min, we can break out early
+            if (current_distance > min_distance):
+                min_potential = False
+                break
+
+        # If loop was broken out of early, reason to continue, move on to next permutation
+        if (min_potential == False):
+            continue
+
+        # Now, we connect the final location in the path to the starting position to complete the cycle
+        current_distance += euclidean_distance(coords[current_path[-1]], coords[current_path[0]]) 
+
         # Update min_distance and best_path
         if current_distance < min_distance: # If the current path distance just calculated is less than the stored minimum we've found so far, we have a new minimum and best path
             min_distance = current_distance # Assign the new minimum euclidean distance to minimum distance
