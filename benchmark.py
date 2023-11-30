@@ -120,65 +120,106 @@ def plot_path(coords, path, algorithm, total_distance, time, dataset_name):
     plt.savefig(file_path)
     print(f"Plot saved as {file_path}")
     plt.close()
+    
+def example_graph(coords, dataset_name):
+    # Set figure size (width, height in inches)
+    plt.figure(figsize=(10, 8))
 
-def generate_distance_matrix(coords, self_distance = 0):
-    num_cities = len(coords)
-    '''
+    # Unpack the coordinates list of tuples into two separate lists, x, and y
+    x, y = zip(*coords)
+
+    # Create a scatter plot of the cities
+    plt.scatter(x, y)
+
+    # Label each point with its index
+    for i in range(len(coords)):
+        plt.text(coords[i][0], coords[i][1], f"{i}", fontsize=10, ha='right', weight='bold')
+
+    # Add title and axis labels
+    plt.title(f"Example for {dataset_name}")
+    plt.xlabel("X-Axis")
+    plt.ylabel("Y-Axis")
+
+    # Ensure the results directory and dataset subdirectory exist
+    results_dir = 'path_results'
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
+    dataset_dir = os.path.join(results_dir, dataset_name)
+    if not os.path.exists(dataset_dir):
+        os.makedirs(dataset_dir)
+
+    # Save the plot
+    file_path = os.path.join(dataset_dir, "Example.png")
+    plt.savefig(file_path)
+    print(f"Plot saved as {file_path}")
+    plt.close()
+
+'''
     Generate a euclidean distance matrix for a list of coordinate tuples.
 
-    The self distance for every city to itself should be infinity for Branch and Bound to avoid an algorithm considering loops which return to the same city.
+    The self-distance for every city to itself should be infinity for Branch and Bound to avoid an algorithm considering loops which return to the same city.
     However, it is 0 by default for other algorithms.
 
-    The inner loop creates a row equal in length to the number of cities, and the router loop causes this loop
+    The first nested for loop's inner loop creates a row equal in length to the number of cities, and the outer loop causes this loop
     to execute a number of times equal to the number of cities. This results in a matrix with an equal number of 
     rows and columns.
-    '''
+
+    The second nested for loop calculates the euclidean distance between all city pairs, and stores them in a matrix. The outer loop is responsible for
+    navigating the different rows, and the inner for loop for navigating the columns of each row. The row represents the starting city, and the column
+    the destination city.
+
+    There are two nested for loops so this function takes 2 * N^2 time, simplifying to O(N^2) in big O notation. Given an input of size N, it takes N * N 
+    storage leading to a space complexity of O(N^2).
+'''
+def generate_distance_matrix(coords, self_distance = 0):
+    num_cities = len(coords)
     matrix = [[self_distance for city in range(num_cities)] for city in range(num_cities)] 
-     # Calculate the distance for each city i to every other city
+    
+    # Calculate the distance for each city i to every other city
     for i in range(num_cities):
         for j in range(num_cities): 
-            if i != j: # Any city traveling to itself should have a distance of 0, for example city 0 -> city 0 results in cost of 0
-                matrix[i][j] = euclidean_distance(coords[i], coords[j]) # Calculate the euclidean distance for each city pair, and use them to populate the distance matrix
+            # Any city traveling to itself should have a distance of 0 or infinity depending on the algorithm, for example city 0 -> city 0 results in cost of 0 or infinity
+            if i != j: 
+                # Calculate the euclidean distance for each city pair, and use them to populate the distance matrix
+                matrix[i][j] = euclidean_distance(coords[i], coords[j]) 
     return matrix
 
-#This calculates total distance for the simulated annealing function
-def calc_total_distance(pathTotVal, distTotMatrix): 
-    
-    sumTotDist = 0
-    
-    for numValTot in range(len(pathTotVal)-1): 
-        
-        sumTotDist += distTotMatrix[pathTotVal[numValTot]][pathTotVal[numValTot+1]]
-        
-    sumTotDist += distTotMatrix[pathTotVal[-1]][pathTotVal[0]]
-    
-    return sumTotDist
+'''
+    Performs row and column reduction on a matrix and calculates the reduction cost. Used in the approximation of a lower bound of a node
+    in the Branch and Bound Algorithm. 
 
+    We subtract the minimum of each row, from each element in that row, adding each minimum found to our reduction cost as long as that minimum is not 0 or infinity.
+
+    Afterwards, we do the same thing, except for columns.
+
+    O(n^2) time complexity due to the two nested for loops.
+'''
 def reduce_matrix(distance_matrix):
-    """
-        Perform row and column reduction on the matrix and calculate the reduction cost.
-    """
-
     num_cities = len(distance_matrix)
     cost = 0 # Initialize cost of reduction 0 
 
-    # Reduce row
+    # Reduce rows
     for row in range(num_cities):
         min_value = min(distance_matrix[row]) # Find the minimum value in the row
-        cost += min_value # Add minimum value from each row to the cost
-        if min_value != 0: # If min the minimum value is 0, the row is already reduced, no need to enter inner loop
+        
+        # If min value is 0, the row is already reduced. If there are only infinities, we do not want to add infinity to the cost!
+        if min_value != 0 and min_value != float('inf'):
+            cost += min_value # Add minimum value from each row to the cost
             for column in range(num_cities):
                 distance_matrix[row][column] -= min_value # Subtract the minimum value from every element in the row
 
-    # Reduce column
+    # Reduce columns
     for column in range(num_cities): # Iterate through each column 
         min_value = min(distance_matrix[row][column] for row in range(num_cities)) # Get the minimum value in the column
-        cost += min_value # Add minimum value from each column to the cost
-        if min_value != 0: # If min value was zero, no need to enter the inner loop
+        
+        # If min value is 0, the column is already reduced. If there are only infinities, we do not want to add infinity to the cost!
+        if min_value != 0 and min_value != float('inf'): 
+            cost += min_value # Add minimum value from each column to the cost
             for row in range(num_cities):
                 distance_matrix[row][column] -= min_value # Subtract the min value from each row in the column
 
-    return distance_matrix, cost # Return reduced distance matrix, aditionally return the cost to be used in calculating the lower bound of a node 
+    # Return reduced distance matrix, aditionally return the cost to be used in calculating the lower bound of a node 
+    return distance_matrix, cost 
 
 '''
     The euclidean_distance function takes two coordinate tuples representing cities.
@@ -261,7 +302,6 @@ def distTotal (route, coordins):
     with the smallest distance value.
     
 '''
-
 def mstMinKey (coords, mstKeyVal, mstMinSetVals):
     
     mstMinVal = sys.maxsize
@@ -275,6 +315,19 @@ def mstMinKey (coords, mstKeyVal, mstMinSetVals):
             mstMinIndexNum = kObj
             
     return mstMinIndexNum
+
+#This calculates total distance for the simulated annealing function
+def calc_total_distance(pathTotVal, distTotMatrix): 
+    
+    sumTotDist = 0
+    
+    for numValTot in range(len(pathTotVal)-1): 
+        
+        sumTotDist += distTotMatrix[pathTotVal[numValTot]][pathTotVal[numValTot+1]]
+        
+    sumTotDist += distTotMatrix[pathTotVal[-1]][pathTotVal[0]]
+    
+    return sumTotDist
     
 
 '''
@@ -383,13 +436,47 @@ def nearest_neighbor_tsp(coords):
     # Now that we have the path and total distance, we must return them so we can visualize the results
     return found_path, found_distance 
 
-# Branch and Bound algorithm for solving the TSP
+'''
+    Branch and Bound algorithm for solving the TSP. It uses an optimized search strategy to systematically divide and conquer the solution space. 
+    It works by maintaining an upperbound and a priority queue. The upperbound is retrieved from Nearest Neighbor to provide us with a decent starting point which
+    can used to quickly prune unfeasible paths. The priority queue begins with the starting node being enqueued. After, we enter a while loop, where as long as we have nodes 
+    in the priority queue, we continue the while loop. From there, the starting node is poppped, its unvisited neighors are checked, and an estimated cost or lower bound 
+    is calculated for each of them. Each of these unvisited neighbors represent a partial solution to the problem, with one more city in their solution, one of the previous
+    node's unvisited neighbors.
+
+    Any unvisited node whose lowerbound is less than the upperbound is enqueued to the priority queue to later be expanded, as long as they are less than the new 
+    upperbound if one is found in the time between when the node was enqueued and when it is popped from the priority queue and checked to see if it should be expanded. 
+    After all of a node's unvisited node's have been checked, we return to the priority queue, popping the next node with the lowest cost, and seeing if its cost is lower 
+    than the upperbound. If it is, we expand it, and enqueue its neighbors if their estimated solution cost is lower than the upperbound. This process repeats until
+    a leaf node is reached, in which case, if its cost is less than the upperbound, we update the upperbound distance and path to those of the current node.
+
+    This process repeats until all potential nodes or potential paths are pruned from the priority queue. The heuristic for estimating a node's lower bound uses a matrix reduction, 
+    the cost to reach the previous node before the node being checked, and the distance from the previous node's last city to next city represented by this node. This solution
+    guarantees optimality and is superior to Brute Force in the terms of its practical run time. 
+    
+    The runtime can be affected by the effectiveness of the given upperbound and the problem dataset itsef. That being said, the theoretical worst case time of complexity 
+    of this implmentation can be approximately bounded by O(n! * n^2). This is because in the worst case scenario, we are unable to prune any paths, and we explore every permutation. Each node represents a partial 
+    solution or permutation, storing a distinct distance matrix, cost, path, and a set of unvisited neighbors for that solution so far.
+    In addition, each node takes O(n^2) time complexity due to its matrix operations, however this is very unlikely for the vast majority of datasets. 
+
+    We can give this algorithm implementation a space complexity of O(M * n^2) where M is representative of the maximum number of nodes in the priority queue at any 
+    given time. Each node is O(n^2) storage because it stores a distance matrix for the lowerbound heuristic.
+    M is dificult to quantify in terms of N and can vary depending on the efficiency of pruning, however M is significantly less than n! as not all permutations 
+    or partial permutations will be stored in the priority queue at the same time. 
+    
+    It is very unlikely this algorithm will approach these mentioned worst case space and time complexities in practice, as it is almost some certain some pruning will occur during the algorithm. However, the 
+    effectiveness of this pruning will vary based on the dataset the algorithm was run on.
+'''
 def branch_and_bound_tsp(coords):
     
     # Generate the distance matrix from the list of coordinate tuples
     distance_matrix = generate_distance_matrix(coords, float('inf'))
+    
+    '''
+        Define a node class for our state based tree which will store a node's path, it's reduced matrix, and its cost.
 
-    # Define a node class for our state based tree which will store a node's path, it's reduced matrix, and its cost
+        The space complexity of each node is O(n^2), this is because of the necessity to store the distance matrix.
+    '''
     class Node:
         def __init__(self, matrix, cost, path, num_cities, unvisited):
             self.matrix = matrix
@@ -406,24 +493,31 @@ def branch_and_bound_tsp(coords):
         def is_complete_tour(self):
             return len(self.path) == self.num_cities # Check if tour is complete (node is a leaf node)
  
-    best_path, upper_bound = nearest_neighbor_tsp(coords) # Get an upperbound and starting path using NN. All node costs must less than upperbound to avoid being pruned
+    # Get an upperbound and starting path using NN. All node costs must less than upperbound to avoid being pruned. This uses O(n^2) time, and O(n) space.
+    best_path, upper_bound = nearest_neighbor_tsp(coords) 
 
-    distance_matrix, starting_cost = reduce_matrix(distance_matrix)
+    distance_matrix, starting_cost = reduce_matrix(distance_matrix) # O(n^2) time and space
     starting_node = Node(distance_matrix, starting_cost, [0], len(coords), set(range(len(coords))))
-    starting_node.unvisited.remove(0) # Remove starting city from unvisited for starting node
+    starting_node.unvisited.remove(0) # Remove starting the city from the starting node's set of unvisited neighbors, this ensures the starting node is not returned to until the end.
     priority_queue = [starting_node] # Our priority queue ensures we always explore the node with the lowest cost first, and at first containins only the root
 
+    # While not all paths have been pruned 
     while priority_queue:
-        current_node = heapq.heappop(priority_queue)
+        current_node = heapq.heappop(priority_queue) # O(logn)
+
+        # If the cost of the current node is greater than the upper bound, skip this node, upperbound may have changed while nodes were waiting in queue
+        if current_node.cost > upper_bound:
+            continue
+
         if (current_node.is_complete_tour):
-            complete_tour_cost = current_node.cost + euclidean_distance(coords[current_node.path[-1]], coords[current_node.path[0]]) # Get total cost of the tour, including from the last node to the first node
-            if (complete_tour_cost < upper_bound): # If total cost of the tour is less than the upperbound, update upperbound
-                upper_bound = complete_tour_cost
-                best_path = current_node.path + [0] # Add the starting city to complete the new best path
-                continue
+
+            # Node is a complete tour and cost is less than or equal to upper bound, so update upperbound
+            upper_bound = current_node.cost
+            best_path = current_node.path + [0] # Add the starting city to complete the new best path
+            continue
 
         for unvisited in current_node.unvisited: 
-            child_matrix = deepcopy(current_node.matrix) # Start with a copy of parent matrix
+            child_matrix = deepcopy(current_node.matrix) # Start with a copy of parent matrix. O(n^2) Time and Space.
             
             # Set values in the row for the beginning city to infinity
             row = current_node.path[-1]
@@ -438,12 +532,12 @@ def branch_and_bound_tsp(coords):
             # Set distance the from child city to the beginning city in the path to infinity
             child_matrix[unvisited][0] = float('inf')
 
-            # Reduce child matrix
-            child_matrix, reduced_cost = reduce_matrix(child_matrix)
+            # Reduce child matrix. O(n^2) time complexity.
+            child_matrix, reduced_cost = reduce_matrix(child_matrix) 
 
             # Find cost of child node, add distance from previous city to next city, the cost of the previous node, and the cost to reduce the matrix of the child node
             child_cost = current_node.matrix[current_node.path[-1]][unvisited] + current_node.cost + reduced_cost
-            
+
             # If child cost is less than the upper bound, create a new node and enqueue it, otherwise prune it as it's not worth exploring further
             if (child_cost < upper_bound):
                 child_path = current_node.path[:] + [unvisited]
@@ -451,6 +545,16 @@ def branch_and_bound_tsp(coords):
                 child_unvisited.remove(unvisited)           
                 child_node = Node(child_matrix, child_cost, child_path, len(coords), child_unvisited)
                 heapq.heappush(priority_queue, child_node)
+
+    # Used to verify BB calculates the correct total distance, including distance back to the start node
+    '''
+        total_distance = 0
+        for i in range(len(best_path) - 1):
+            city = best_path[i]
+            next_city = best_path[i + 1]
+            total_distance += euclidean_distance(coords[city], coords[next_city]) 
+        print(total_distance)
+    '''
 
     return best_path, upper_bound # Return the best path and minimum cost 
 
@@ -1045,6 +1149,7 @@ def main():
     
     # Read dataset and execute algorithm
     coords = read_tsp_file_from_disk(args.dataset)  # <-- Modified this line
+    example_graph(coords, dataset_filename)
 
     start_time = time.time()
 
