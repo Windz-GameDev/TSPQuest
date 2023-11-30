@@ -563,12 +563,26 @@ def branch_and_bound_tsp(coords):
 '''
     Dynamic programming algorithm for solving the TSP 
 
-    It uses recursion to find the optimal cost giving a starting node 
+    It uses recursion to find the optimal cost given a city and a subset of remaining cities. Whether or not a city is visited in a subset is represented 
+    by a bitmask. Essentially the ith city, starting at index 0, in a binary number is set to 1 to represent a visited city, and 0  for one not yet visited.
 
-    The space complexity is O(n * 2^n) as this is required to storage all possible subsets for n cities which may be reached during the recursion process.
+    The time complexity is O(n^2 * 2^n). Theoretically we may call the recursion function for nearly each combination of n cities and 2^n subsets. Since each individual 
+    call of the recursion function is O(n) to check for unvisited cities, we can determine the previously mentioned time complexity of O(n^2 * 2^n). 
+
+    The space complexity is O(n * 2^n) as this is required for the memoization table to store all possible subsets for n cities which may be reached 
+    during the recursion process.
+
+    Overall, the held karp algorithm improves the run time of the brute force algorithm by using smart recursion, using increased storage, and reusing solutions 
+    between cities and subsets of visited cities.
 
 '''
 def held_karp_tsp(coords):    
+    '''
+        This function is a key component of the Held Karp Algorithm. It recursively computes the minimum cost of completing a tour, starting from a given city
+        and visting a specific subset of remaining cities. Where the problem is distinguished from brute force is that in the case of reappearing subproblems, 
+        the answer to that subproblem is retrieved from a memoization table to avoid repeat calculations. If the subproblem was not previously calculated, it is stored in 
+        the memoization table for future use.
+    '''
     def recursion(currently_visited, city):
         # Base case, reached end city in the path, calculate the distance from the final node, to the starting node
         if(currently_visited == all_cities_visited):
@@ -651,7 +665,11 @@ def held_karp_tsp(coords):
         return memo[city][currently_visited][0]
     
     '''
-        This function is O(n), this is because each next node in the memoization table 
+        This function will allow us to reconstruct the optimal path given an already filled out memoization table from the recursion algorithm.
+        From the start of the optimal path in the memoization table, the first city to a subset where the first city is the only one visited, 
+        it continously accesses the next node which was used to provide the optimal path cost.
+
+        This function takes O(n) time, this is because each cell in the memoization table 
         will allow the program to the add the next optimal city in the path to the best_path variable n times.
     '''
     def reconstruct_path():
