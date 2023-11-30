@@ -120,7 +120,8 @@ def plot_path(coords, path, algorithm, total_distance, time, dataset_name):
     plt.savefig(file_path)
     print(f"Plot saved as {file_path}")
     plt.close()
-    
+
+'''
 def example_graph(coords, dataset_name):
     # Set figure size (width, height in inches)
     plt.figure(figsize=(10, 8))
@@ -153,7 +154,8 @@ def example_graph(coords, dataset_name):
     plt.savefig(file_path)
     print(f"Plot saved as {file_path}")
     plt.close()
-
+'''
+    
 '''
     Generate a euclidean distance matrix for a list of coordinate tuples.
 
@@ -558,16 +560,23 @@ def branch_and_bound_tsp(coords):
 
     return best_path, upper_bound # Return the best path and minimum cost 
 
-# Dynamic programming algorithm for solving the TSP 
+'''
+    Dynamic programming algorithm for solving the TSP 
+
+    It uses recursion to find the optimal cost giving a starting node 
+
+    The space complexity is O(n * 2^n) as this is required to storage all possible subsets for n cities which may be reached during the recursion process.
+
+'''
 def held_karp_tsp(coords):    
     def recursion(currently_visited, city):
         # Base case, reached end city in the path, calculate the distance from the final node, to the starting node
         if(currently_visited == all_cities_visited):
-            # Cost of the city to an empty unvisited subset is the distance from the city to the starting city 
+            # Cost of the current city to an empty unvisited subset is the distance from the city to the starting city 
             memo[city][currently_visited] = (distance_matrix[city][0], 0);
             return memo[city][currently_visited][0] # Return cost stored in the memo table
 
-        # The min cost from this city to the next optimal city in this subset of unvisited cities have already been calculated, return it from the memoization table 
+        # If the min cost from this city to the next optimal city in this subset of unvisited cities has already been calculated, return it from the memoization table 
         if (memo[city][currently_visited][0] != float('inf')):
             return memo[city][currently_visited][0] 
 
@@ -575,24 +584,26 @@ def held_karp_tsp(coords):
         min_cost = float('inf')
         min_city = None
 
-        # Check for unvisited cities
+        # Check for unvisited cities, O(n) time and space
         for next_city in range(num_cities):
             '''
                 1 << next_city will create a binary number with only the bit representing the integer index value held by next_city, set to 1
                 
-                currently_visited & (i << next_city) performs a bitwise AND between the currently visited bit_mask and 
-                the binary number with only the next city's index set to one
+                memo[city] == gives a bit mask which tells 
+
+                currently_visited & (i << next_city) performs a bitwise AND between the currently visited bit_mask and the
+                the binary number with only the next city's index set to 1.
 
                 The above bitwise AND operation creates a new binary number, where there can only be one bit set 
-                to one. That is if the number held by next_city's bit that was set to one in 1 << next_city is also set to one in currently_visited, 
-                which means that city already been visited. Here is a visual example:
+                to 1. That is, if the number held by next_city's bit that was set to one by 1 << next_city is also set to 1 in currently_visited, 
+                then next_city has already been visited in the currently_visited subset. Here is a visual example:
 
                 
-                00101 = currently visited
+                00101 = currently visited's bitmask 
                 00001 = 1 << next_city where next_city = 0
 
                 00101 & 00001 = 000001
-                Since 000001 != 0, it's 1, we know the 0th city by has been visited.
+                Since 000001 != 0, then we know that next_city's bit is set to 1 in the currently_visited subset, therefore, we know the 0th city has been visited.
 
                 Take the counter example
 
@@ -604,8 +615,8 @@ def held_karp_tsp(coords):
 
 
                 In short, if the binary number as a result of the bitwise AND
-                is 0, the number held by next_city's bit in the currently_visited bitmask is 0, and the current next city
-                in num_cities has not been visited yet, meaning we should explore it. 
+                is 0, the number held by next_city's bit in the currently_visited bitmask is 0. This means next city
+                in the range num_cities has not been visited yet, meaning we should explore it. 
             '''
             if ((currently_visited & (1 << next_city)) == 0):
                 '''
@@ -638,6 +649,11 @@ def held_karp_tsp(coords):
         # No more unvisited cities, we have the minimum cost for this city to this subset so we return it up to the next level
         memo[city][currently_visited] = (min_cost, min_city)
         return memo[city][currently_visited][0]
+    
+    '''
+        This function is O(n), this is because each next node in the memoization table 
+        will allow the program to the add the next optimal city in the path to the best_path variable n times.
+    '''
     def reconstruct_path():
         # Bitmask where first city (0) is visited and all others are unvisited
         currently_visited = 1 << 0
@@ -663,9 +679,12 @@ def held_karp_tsp(coords):
         best_path.append(0)
         return best_path
     
-    
+    # Obtain the number of cities which will be used to help create our distance matrix and memoization table
     num_cities = len(coords)
+
+    # Create a distance matrix to quickly obtain distances between cities O(n^2) time and storage
     distance_matrix = generate_distance_matrix(coords, 0)
+
     ''' 
         Create a 2D list with 2^n columns and n rows where n represents the number of ciites.
         Each row corresponds to a city, and each column corresponds to a subset of cities.
@@ -675,8 +694,10 @@ def held_karp_tsp(coords):
 
         Ex: 
             
-        memo[i][j] represents the minimum cost to travel from a city i, to visit all cities
+        memo[i][j][0] represents the minimum cost to travel from a city i, to visit all cities
         in a subset j.
+
+        O(2^n * n) time and storage
 
     '''
     memo = [[(float('inf'), None) for _ in range(1 << num_cities)] for _ in range(num_cities)]
@@ -689,8 +710,14 @@ def held_karp_tsp(coords):
         
     '''
     all_cities_visited = (1 << num_cities) - 1 
-    track_visited_cities = 1 << 0 # Create a binary number holding 1, this represents our starting point in the algorithm, the 0th city
+    
+    # Create a binary number holding 1, this represents our starting point in the algorithm, the 0th city
+    track_visited_cities = 1 << 0 
+
+    # Fill out the memoization table, and retrieve the final cost of the optimal path
     final_cost = recursion(track_visited_cities, 0)
+
+    # Back track through the table to obtain the path which provided the final_cost
     final_path = reconstruct_path()
 
     return final_path, final_cost
@@ -1149,7 +1176,7 @@ def main():
     
     # Read dataset and execute algorithm
     coords = read_tsp_file_from_disk(args.dataset)  # <-- Modified this line
-    example_graph(coords, dataset_filename)
+    # example_graph(coords, dataset_filename)
 
     start_time = time.time()
 
