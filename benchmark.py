@@ -456,7 +456,7 @@ def nearest_neighbor_tsp(coords):
     the cost to reach the previous node before the node being checked, and the distance from the previous node's last city to next city represented by this node. This solution
     guarantees optimality and is superior to Brute Force in the terms of its practical run time. 
     
-    The runtime can be affected by the effectiveness of the given upperbound and the problem dataset itsef. That being said, the theoretical worst case time of complexity 
+    The runtime can be affected by the effectiveness of the given upperbound and the problem dataset itself. That being said, the theoretical worst case time of complexity 
     of this implmentation can be approximately bounded by O(n! * n^2). This is because in the worst case scenario, we are unable to prune any paths, and we explore every permutation. Each node represents a partial 
     solution or permutation, storing a distinct distance matrix, cost, path, and a set of unvisited neighbors for that solution so far.
     In addition, each node takes O(n^2) time complexity due to its matrix operations, however this is very unlikely for the vast majority of datasets. 
@@ -737,7 +737,6 @@ def held_karp_tsp(coords):
 
     # Back track through the table to obtain the path which provided the final_cost
     final_path = reconstruct_path()
-
     return final_path, final_cost
       
 #two-opt function
