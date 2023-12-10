@@ -23,19 +23,19 @@ This repository contains a benchmark Python script for solving the Traveling Sal
 ## Description
 
 The Traveling Salesman Problem (TSP) is a classic optimization problem in computer science. The goal is to find the shortest route that visits a set of cities and returns to the origin city. This repository implements various algorithms to solve the TSP, ranging from exact methods to heuristic and approximation algorithms.
-This repository was created for our COT6405 class project - "The Euclidean Traveling Salesman, Comparison of Efficiency between Exact and approximate heuristic algorithms".
+This repository was created for our COT6405 class project - "The Euclidean Traveling Salesman, Comparison of Efficiency between Exact and Approximate Heuristic Algorithms."
 
 ## Algorithms
 
 The script in this repository implements the following algorithms for solving the TSP:
 
-1. **Brute Force**: An exact algorithm that generates all possible tours and selects the shortest one. Time Complexity: \(O(n! * n)\).
+1. **Brute Force**: An exact algorithm that generates all possible tours and selects the shortest one. The worst-case time complexity of our implementation is: \(O(n! * n)\).
 
-2. **Branch and Bound**: An exact algorithm that uses a tree search strategy. Time Complexity: Varies, best case \(O(n^2 \log n)\), worst case \(O(2^n)\).
+2. **Branch and Bound**: An exact algorithm that uses a tree search strategy. The worst-case time complexity of our implementation is: \(O(n! * n^2)\); this is due to matrix operations used for estimating lower bounds. In practice, it is faster than Brute Force.
 
-3. **Held-Karp Algorithm**: An exact algorithm that uses dynamic programming. Time Complexity: \(O(n^2 2^n)\).
+3. **Held-Karp Algorithm**: An exact algorithm that uses dynamic programming. The time Complexity of our implementation is: \(O(n^2 2^n)\).
 
-4. **Nearest Neighbor (NN)**: A heuristic algorithm. Time Complexity: \(O(n^2)\).
+4. **Nearest Neighbor (NN)**: A heuristic algorithm. The time complexity of our implementation is: \(O(n^2)\).
 
 5. **2-Opt Algorithm**: A heuristic algorithm. Time Complexity: \(O(n^2)\) for each 2-opt move, \(O(n^3)\) if applied exhaustively.
 
