@@ -22,14 +22,14 @@ This repository contains a benchmark Python script for solving the Traveling Sal
 
 ## Description
 
-The Traveling Salesman Problem (TSP) is a classic optimization problem in computer science. The goal is to find the shortest possible route that visits a set of cities and returns to the origin city. This repository provides implementations of various algorithms to solve the TSP, ranging from exact methods to heuristic and approximation algorithms.
-This repository was created for our COT6405 class project - "The Traveling Salesman, Comparison of Efficiency between exact and approximate heuristic algorithms".
+The Traveling Salesman Problem (TSP) is a classic optimization problem in computer science. The goal is to find the shortest route that visits a set of cities and returns to the origin city. This repository implements various algorithms to solve the TSP, ranging from exact methods to heuristic and approximation algorithms.
+This repository was created for our COT6405 class project - "The Euclidean Traveling Salesman, Comparison of Efficiency between Exact and approximate heuristic algorithms".
 
 ## Algorithms
 
 The script in this repository implements the following algorithms for solving the TSP:
 
-1. **Brute Force**: An exact algorithm that generates all possible tours and then selects the shortest one. Time Complexity: \(O(n! * n)\).
+1. **Brute Force**: An exact algorithm that generates all possible tours and selects the shortest one. Time Complexity: \(O(n! * n)\).
 
 2. **Branch and Bound**: An exact algorithm that uses a tree search strategy. Time Complexity: Varies, best case \(O(n^2 \log n)\), worst case \(O(2^n)\).
 
@@ -41,18 +41,18 @@ The script in this repository implements the following algorithms for solving th
 
 6. **Christofides Algorithm**: A heuristic algorithm that combines a minimum spanning tree and a minimum weight graph. Time Complexity: \(O(n^3)\).
 
-7. **Ant Colony Optimization Algorithm**: A metaheuristic algorithm based on the pheremone navigation of ants. Time Complexity: \(O(m n^2)\)
+7. **Ant Colony Optimization Algorithm**: A metaheuristic algorithm based on the pheromone navigation of ants. Time Complexity: \(O(m n^2)\)
 
-8. **Simulated Annealing**: A probabilistic technique. Time Complexity: Varies depending on parameters, typically \(O(n^2)\) per iteration for TSP.
+8. **Simulated Annealing**: A probabilistic technique. Time Complexity: Depending on parameters, typically \(O(n^2)\) per iteration for TSP.
 
 ## Dataset
 
 The script uses the following TSP datasets, which were retrieved from [The University of Waterloo's TSP page](https://www.math.uwaterloo.ca/tsp/world/countries.html):
 
-- `lu980.tsp`: Represents the locations of 980 cities in Luxembourg.
-- `qa194.tsp`: Represents 194 locations in Qatar.
-- `wi4.tsp`: Represents the locations of 4 cities in Western Sahara. (A trimmed down version of the next dataset which we modified.)
+- `wi4.tsp`: Represents the locations of 4 cities in Western Sahara. (A trimmed-down version of the next dataset, which we modified.)
 - `wi29.tsp`: Represents the locations of 29 cities in Western Sahara.
+- `qa194.tsp`: Represents 194 locations in Qatar.
+- `lu980.tsp`: Represents the locations of 980 cities in Luxembourg.
 - `ja9847.tsp`: Represents the locations of 9,847 cities in Japan.
 
 We also use our own TSP dataset generator, which is based on the file structure of the previously listed datasets.
@@ -72,7 +72,7 @@ python tsp_generator.py <num_cities> <output_file> [options]
 ### Parameters
 
 - `<num_cities>`: (Required) The number of cities you want to generate in the TSP dataset.
-- `<output_file>`: (Required) Specify the name of the file where the generated TSP dataset will be saved.
+- `<output_file>`: (Required) Specify the file name where the generated TSP dataset will be saved.
 
 ### Options
 
@@ -80,6 +80,7 @@ python tsp_generator.py <num_cities> <output_file> [options]
 - `--comment "<comment>"`: Add a comment or description that will be included in the dataset.
 - `--min_coord <min_coordinate>`: Specify the minimum coordinate value for the cities in the dataset.
 - `--max_coord <max_coordinate>`: Specify the maximum coordinate value for the cities in the dataset.
+- `--metric_space`: Adding this tag will guarantee the TSP generator creates a problem dataset that forms a metric space, which is required for the Christofides Algorithm. We do not recommend using this tag for inputs greater than 700 or if you have a weak CPU.
 
 ### Example
 
@@ -99,7 +100,7 @@ This example command will:
 Execute the benchmark script by using the following command structure in your terminal:
 
 ```bash
-python benchmark.py Datasets/<dataset> <algorithm> [options]
+python benchmark.py datasets/<dataset> <algorithm> [options]
 ```
 
 ### Parameters
@@ -111,7 +112,10 @@ python benchmark.py Datasets/<dataset> <algorithm> [options]
   - `held_karp`
   - `nearest_neighbor`
   - `two_opt`
+  - `christofides`
+  - `ant_colony`
   - `simulated_annealing`
+  
 
 ### Options
 
@@ -120,7 +124,7 @@ python benchmark.py Datasets/<dataset> <algorithm> [options]
 ### Examples
 
 ```bash
-python benchmark.py Datasets/lu980.tsp nearest_neighbor
+python benchmark.py datasets/lu980.tsp nearest_neighbor
 ```
 
 This example command will:
@@ -131,7 +135,7 @@ This example command will:
   -If it times out, it will display skipping the algorithm.
 
 ```bash
-python benchmark.py Datasets/lu980.tsp brute_force --timeout 5
+python benchmark.py datasets/lu980.tsp brute_force --timeout 5
 ```
 
 This example command will:
@@ -151,7 +155,7 @@ python run_benchmark.py <dataset> <csv_file> [options]
 
 ### Parameters
 - `<dataset>`: (Required) Specify the path to the dataset file.
-- `<csv_file>`: (Required) CSV file Name to save the results.
+- `<csv_file>`: (Required) CSV file Name to save the results. Please don't add file extension; it is handled automatically. If CSV already exists, the data will be appended; a new file will be created if it doesn't.
 
 ### Options
 -`--timeout <# seconds>`: Specify how long any algorithm will run at max in seconds. The default is 60 seconds. 
@@ -159,22 +163,22 @@ python run_benchmark.py <dataset> <csv_file> [options]
 ### Examples
 
 ```bash
-python run_benchmark.py Datasets/wi4.tsp results.csv --timeout 5
+python run_benchmark.py datasets/wi4.tsp results
 ```
 
 This example command will:
-- This command will print the results of each algorithm on the `wi4.tsp` dataset
-- The results will be stored in the `results.csv` file in the same directory as the run_benchmark.py file.
+- This command will print the results of each algorithm on the `wi4.tsp` dataset to the console.
+- The results will be stored in the `results_timeout_60.csv` file in the benchmark_results directory.
 - Each algorithm gets the default 60 seconds to run.
 - If any algorithm times out, NaN will be filled in for distance and elapsed time for that algorithm on the CSV.
  
 ```bash
-python run_benchmark.py Datasets/lu980.tsp results.csv --timeout 5
+python run_benchmark.py datasets/lu980.tsp results --timeout 5
 ```
 
 This example command will:
 - This command will print the results of each algorithm on the `lu980.tsp` dataset
-- The results will be stored in the `results.csv` file in the same directory as the run_benchmark.py file.
+- The results will be stored in the `results_timeout_5.csv` file in the benchmark_results directory.
 - Any single algorithm gets 5 seconds at most to run.
 - If any algorithm times out, NaN will be filled in for distance and elapsed time in the CSV for that algorithm.
 
@@ -197,11 +201,12 @@ python tsp_data_analyzer.py data.csv
 ```
 
 This example command will:
-- Read the CSV file named `data.csv`.
+- Read the CSV file named `data.csv`
 - Perform an analysis of the TSP algorithm results contained in the file.
-- Display the resulting visualizations.
+- Save the visualizations for each dataset at the following directory `tsp_analysis_charts/data(name of CSV)/{dataset name}`
+- Save the overall scatterplot visualization for the number of cities and time in the `tsp_analysis_charts/data(name of CSV)` directory.
 
-Please replace `data.csv` with the path to your actual CSV file. The CSV file should be in the correct format with the required columns ('Algorithm', 'Total Distance', 'Number of Cities', 'Elapsed Time (Seconds)', 'Dataset'). See the example CSV in this repository for reference.
+Please replace `data.csv` with the path to your actual CSV file. The CSV file should be in the correct format with the required columns ('Dataset', 'Algorithm', 'Number of Cities', 'Total Distance', 'Elapsed Time (Seconds)'). Please look at the example CSV in the `benchmark_results` directory in this repository for reference.
 
 ## Dependencies
 
@@ -230,7 +235,6 @@ The scripts require Python and the following Python libraries:
 - `seaborn`
 - `pandas`
   
-
 ## References
 
 \[1\] GeeksforGeeks, “Traveling salesman problem (TSP) implementation,” GeeksforGeeks, https://www.geeksforgeeks.org/traveling-salesman-problem-tsp-implementation/. 
@@ -287,8 +291,4 @@ Aaron Goldstein, Jonathan O'Berry
 
 ## Acknowledgements
 
-We would like to thank our professors and peers for their valuable feedback and support throughout this project. We would also like to acknowledge the creators of the datasets we used for our analysis, and GeeksForGeeks for their explanations of the various algorithms and example implementations.
-
-## Future Work
-
-Future work could involve testing these algorithms on larger datasets beyond 10000 cities to assess scalability. Exploring metaheuristic algorithms like Genetic Algorithms or Ant Colony Optimization could also be beneficial. Machine learning techniques, particularly reinforcement learning, could offer a novel approach to solving the TSP. Additionally, it would be interesting to investigate the impact of problem constraints such as time-windows or vehicle capacities on the performance of these algorithms.
+We thank our professors and peers for their valuable feedback and support throughout this project. We would also like to acknowledge the creators of the datasets we used for our analysis and our various sources for their explanations of the various algorithms and example implementations.
