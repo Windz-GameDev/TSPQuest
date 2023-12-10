@@ -1,6 +1,6 @@
 # TSPQuest
 
-This repository contains a benchmark Python script for solving the Traveling Salesman Problem (TSP) using different algorithms and analyzing those results.
+This repository contains a benchmark Python script for solving the Euclidean Traveling Salesman Problem (TSP) using different algorithms. It also containers various other scripts for generating problem datasets, running all the algorithms at once on a single dataset and writing those results to a CSV, and an analyzer script for generating visualizations for the data.
 
 ## Table of Contents
 
