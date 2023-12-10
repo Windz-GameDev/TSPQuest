@@ -61,7 +61,7 @@ We also use our own TSP dataset generator, which is based on the file structure 
 
 ## Running the `tsp_dataset_generator.py` Script
 
-The purpose of the tsp_dataset_generator.py script is to generate unique datasets on which one may run the various datasets programmed into `benchmark.py`
+The purpose of the tsp_dataset_generator.py script is to generate unique datasets on which one may run the various algorithms implemented in `benchmark.py`
 
 Execute the TSP generator script by using the following command structure in your terminal:
 
@@ -72,7 +72,7 @@ python tsp_generator.py <num_cities> <output_file> [options]
 ### Parameters
 
 - `<num_cities>`: (Required) The number of cities you want to generate in the TSP dataset.
-- `<output_file>`: (Required) Specify the file name where the generated TSP dataset will be saved.
+- `<output_file>`: (Required) Specify the file name where the generated TSP dataset will be saved. Add the .tsp file extension for this script.
 
 ### Options
 
@@ -131,7 +131,7 @@ This example command will:
   - Run the nearest neighbor algorithm on the `lu980.tsp` dataset.
   - It will have the default timeout of 60 seconds.
   - It will display the dataset used, algorithm used, path, number of cities, total distance, and the elapsed time.
-  - It will visualize the final path using a scatterplot.
+  - It will save a scatterplot visualizing the path at `path_results/{dataset_name}` in a PNG file.
   - If it times out, it will display skipping the algorithm.
 
 ```bash
@@ -142,8 +142,9 @@ This example command will:
   - Run the brute force algorithm on the `lu980.tsp` dataset.
   - It will have a timeout of 5 seconds.
   - If it finishes, it will display the dataset, the algorithm, the path, the number of cities, the total distance, and the elapsed time.
-  - It will visualize the final path using a scatterplot if it finishes.
+  - If finished, it will save a scatterplot visualizing the path at `path_results/{dataset_name}` in a PNG file.
   - If it times out, it will display skipping the algorithm.
+  - Note: This particular command is pretty much 100% guaranteed to time out.
 
 ## Running the `run_benchmark.py` Script
 
