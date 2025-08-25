@@ -33,7 +33,7 @@ The script in this repository implements the following algorithms for solving th
 
 2. **Branch and Bound**: An exact algorithm that uses a tree search strategy. The worst-case time complexity of our implementation is: \(O(n! * n^2)\); this is due to matrix operations used for estimating lower bounds. In practice, it is faster than Brute Force.
 
-3. **Held-Karp Algorithm**: An exact algorithm that uses dynamic programming. The time Complexity of our implementation is: \(O(n^2 2^n)\).
+3. **Held-Karp Algorithm**: An exact algorithm that uses dynamic programming. The time Complexity of our implementation is: \(O(n^2 * 2^n)\).
 
 4. **Nearest Neighbor (NN)**: A heuristic algorithm. The time complexity of our implementation is: \(O(n^2)\).
 
@@ -41,7 +41,7 @@ The script in this repository implements the following algorithms for solving th
 
 6. **Christofides Algorithm**: A heuristic algorithm that combines a minimum spanning tree and a minimum weight graph. Time Complexity: \(O(n^3)\).
 
-7. **Ant Colony Optimization Algorithm**: A metaheuristic algorithm based on the pheromone navigation of ants. Time Complexity: \(O(m n^2)\)
+7. **Ant Colony Optimization Algorithm**: A metaheuristic algorithm based on the pheromone navigation of ants. Time Complexity: \(O(m * n^2)\)
 
 8. **Simulated Annealing**: A probabilistic technique. Time Complexity: Depending on parameters, typically \(O(n^2)\) per iteration for TSP.
 
